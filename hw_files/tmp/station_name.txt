@@ -1,0 +1,30 @@
+1000 Taipei
+2000 Taichung
+3000 Kaohsiung
+4000 Tainan
+5000 Chiayi
+6000 Hsinchu
+7000 Hualien
+8000 Taitung
+9000 Keelung
+10000 Pingtung
+11000 Yilan
+12000 Miaoli
+13000 Nantou
+14000 Changhua
+15000 Yunlin
+16000 Chiayi
+17000 Pingtung
+18000 Penghu
+19000 Kinmen
+20000 Lienchiang
+21000 Taoyuan
+22000 New Taipei
+23000 Taichung
+24000 Tainan
+25000 Kaohsiung
+26000 Taipei
+27000 Keelung
+28000 Hsinchu
+29000 Chiayi
+
