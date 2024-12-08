@@ -9,12 +9,14 @@
 
 enum Order { PREORDER, INORDER, POSTORDER };
 
+template <class T> class ParentChild;
 template <class T> class Tree;
 template <class T> class TreeNode {
   TreeNode *LeftChild;
   TreeNode *RightChild;
   T data;
 
+  friend class ParentChild<T>;
   friend class Tree<T>;
 
 public:
@@ -36,6 +38,17 @@ public:
       out << node->data;
     return out;
   };
+};
+
+template <class T>
+class ParentChild {
+    TreeNode<T>* node;
+    TreeNode<T>* parent;
+
+    friend class Tree<T>;
+  public:
+    ParentChild() : node(nullptr), parent(nullptr) {};
+    ~ParentChild() {};
 };
 
 template <class T> class Tree {
@@ -128,7 +141,6 @@ template <class T> class Tree {
 
   bool isTreeReversed() const {
     return isReversed;
-    // if (!root->LeftChild && !root->RightChild) return false;
     // return ((root->LeftChild && root->LeftChild > root) || (root->RightChild
     // && root->RightChild < root));
   };
@@ -152,31 +164,43 @@ template <class T> class Tree {
       return false;
 
     if (node->data == target) {
-      std::cout << "Target found" << std::endl;
-      TreeNode<T> *successor = inOrderSuccessor(node);
-      if (!successor) {
-        // Leaf node
+      TreeNode<T> *successor = nullptr;
+      ParentChild<T>* pc = nullptr;
+
+      if (node->LeftChild  && !node->RightChild)
+        successor = node->LeftChild;
+      else if (node->RightChild && !node->LeftChild)
+        successor = node->RightChild;
+      else if (node->LeftChild && node->RightChild)
+        pc = findRightMostNode(node->LeftChild);
+
+      if (!successor && !pc) {
         if (parent) {
           if (parent->LeftChild == node)
             parent->LeftChild = nullptr;
           else
             parent->RightChild = nullptr;
-        } else {
-          root = nullptr; // If deleting the root node
-        }
+        } else
+          root = nullptr;
+
         delete node;
-        return true;
+      } else if (successor) {
+          swap(successor, node);
+          node->LeftChild = successor->LeftChild;
+          node->RightChild = successor->RightChild;
+          delete successor;
       } else {
-        std::cout << "Moving target to leaf for deletion" << std::endl;
-        swap(successor, node);
-        if (successor == node->LeftChild)
-          return deleteNode(node, node->LeftChild, target);
-        else
-          return deleteNode(node, node->RightChild, target);
+        swap(pc->node, node);
+        if (pc->parent)
+          pc->parent->RightChild = nullptr;
+        else 
+          node->LeftChild = pc->node->LeftChild;
+        delete pc->node;
       }
+      return true;
     } else {
-      std::cout << "Searching " << target << " at " << node << " with parent "
-                << parent << std::endl;
+      // std::cout << "Searching " << target << " at " << node << " with parent "
+      //          << parent << std::endl;
       if (isTreeReversed())
         return (target < node->data)
                    ? deleteNode(node, node->RightChild, target)
@@ -188,12 +212,21 @@ template <class T> class Tree {
     }
   }
 
-  TreeNode<T> *inOrderSuccessor(TreeNode<T> *node) const {
-    if (!node)
-      return nullptr;
-    return (node->LeftChild)    ? node->LeftChild
-           : (node->RightChild) ? node->RightChild
-                                : nullptr;
+  ParentChild<T>* findRightMostNode(TreeNode<T>* node) {
+    if (!node) return nullptr;
+
+    ParentChild<T>* pc = new ParentChild<T>();
+    if (!node->RightChild) {
+      pc->node = node;
+      return pc;
+    }
+
+    if (!node->RightChild->RightChild) {
+      pc->parent = node;
+      pc->node = node->RightChild;
+      return pc;
+    } else 
+      return findRightMostNode(node->RightChild);
   };
 
   void swap(TreeNode<T> *a, TreeNode<T> *b) {
@@ -203,26 +236,6 @@ template <class T> class Tree {
     T tmp = a->data;
     a->data = b->data;
     b->data = tmp;
-  };
-
-  void restoreBST(TreeNode<T> *node) {
-    if (!node)
-      return;
-
-    if (isTreeReversed()) {
-      if (node->LeftChild && node > node->LeftChild)
-        swap(node, node->LeftChild);
-      else if (node->RightChild && node < node->RightChild)
-        swap(node, node->RightChild);
-    } else {
-      if (node->LeftChild && node < node->LeftChild)
-        swap(node, node->LeftChild);
-      else if (node->RightChild && node > node->RightChild)
-        swap(node, node->RightChild);
-    }
-
-    restoreBST(node->LeftChild);
-    restoreBST(node->RightChild);
   };
 
   void printTree() const {
