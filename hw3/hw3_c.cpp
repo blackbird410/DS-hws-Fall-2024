@@ -40,15 +40,15 @@ public:
   };
 };
 
-template <class T>
-class ParentChild {
-    TreeNode<T>* node;
-    TreeNode<T>* parent;
+template <class T> class ParentChild {
+  TreeNode<T> *node;
+  TreeNode<T> *parent;
 
-    friend class Tree<T>;
-  public:
-    ParentChild() : node(nullptr), parent(nullptr) {};
-    ~ParentChild() {};
+  friend class Tree<T>;
+
+public:
+  ParentChild() : node(nullptr), parent(nullptr) {};
+  ~ParentChild() {};
 };
 
 template <class T> class Tree {
@@ -165,9 +165,9 @@ template <class T> class Tree {
 
     if (node->data == target) {
       TreeNode<T> *successor = nullptr;
-      ParentChild<T>* pc = nullptr;
+      ParentChild<T> *pc = nullptr;
 
-      if (node->LeftChild  && !node->RightChild)
+      if (node->LeftChild && !node->RightChild)
         successor = node->LeftChild;
       else if (node->RightChild && !node->LeftChild)
         successor = node->RightChild;
@@ -185,21 +185,22 @@ template <class T> class Tree {
 
         delete node;
       } else if (successor) {
-          swap(successor, node);
-          node->LeftChild = successor->LeftChild;
-          node->RightChild = successor->RightChild;
-          delete successor;
+        swap(successor, node);
+        node->LeftChild = successor->LeftChild;
+        node->RightChild = successor->RightChild;
+        delete successor;
       } else {
         swap(pc->node, node);
         if (pc->parent)
           pc->parent->RightChild = nullptr;
-        else 
+        else
           node->LeftChild = pc->node->LeftChild;
         delete pc->node;
       }
       return true;
     } else {
-      // std::cout << "Searching " << target << " at " << node << " with parent "
+      // std::cout << "Searching " << target << " at " << node << " with parent
+      // "
       //          << parent << std::endl;
       if (isTreeReversed())
         return (target < node->data)
@@ -212,10 +213,11 @@ template <class T> class Tree {
     }
   }
 
-  ParentChild<T>* findRightMostNode(TreeNode<T>* node) {
-    if (!node) return nullptr;
+  ParentChild<T> *findRightMostNode(TreeNode<T> *node) {
+    if (!node)
+      return nullptr;
 
-    ParentChild<T>* pc = new ParentChild<T>();
+    ParentChild<T> *pc = new ParentChild<T>();
     if (!node->RightChild) {
       pc->node = node;
       return pc;
@@ -225,7 +227,7 @@ template <class T> class Tree {
       pc->parent = node;
       pc->node = node->RightChild;
       return pc;
-    } else 
+    } else
       return findRightMostNode(node->RightChild);
   };
 
