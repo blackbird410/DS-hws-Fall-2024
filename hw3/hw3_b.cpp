@@ -1,94 +1,73 @@
-#include <cmath>
-#include <ctime>
-#include <iomanip>
 #include <iostream>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
 
-enum Order { PREORDER, INORDER, POSTORDER };
-
-template <class T> class Tree;
-template <class T> class TreeNode {
-  TreeNode *LeftChild;
-  TreeNode *RightChild;
-  T data;
-
-  friend class Tree<T>;
-
+template <class T> class Element {
 public:
-  TreeNode() {};
-  TreeNode(T d, TreeNode *l = nullptr, TreeNode *r = nullptr)
-      : LeftChild(l), RightChild(r), data(d) {};
-  ~TreeNode() {};
-
-  bool operator<(const TreeNode<T> *other) const {
-    return (other) ? data < other->data : false;
-  };
-
-  bool operator>(const TreeNode<T> *other) const {
-    return (other) ? data > other->data : false;
-  };
-
-  friend std::ostream &operator<<(std::ostream &out, const TreeNode<T> *node) {
-    if (node)
-      out << node->data;
-    return out;
-  };
+  T key;
 };
 
-template <class T> class Tree {
-  TreeNode<T> *root;
+template <class T> class BST;
+template <class T> class BSTNode {
+  friend class Tree;
 
-  void deleteNode(TreeNode<T> *node) {
+public:
+  BSTNode();
+  BSTNode(const Element<T> &x) { data = x.key; };
+  BSTNode(T &d) { data = d; }
+
+private:
+  BSTNode *LeftChild;
+  T data;
+  BSTNode *RightChild;
+
+  friend class BST<T>;
+};
+
+template <class T> class BST {
+public:
+  BST() : root(nullptr) {};
+  ~BST() { deleteNode(root); };
+
+  // Tree operations
+  BSTNode<T> *Search(const Element<T> &x);
+  BSTNode<T> *Search(BSTNode<T> *b, const Element<T> &x);
+  BSTNode<T> *IterSearch(const Element<T> &x);
+  void Insert(const Element<T> &x);
+  int height() const;
+  int weight() const;
+  int heightBF() const;
+  int weightBF() const;
+
+  void preOrder() const { preOrder(root); };
+  void inOrder() const { inOrder(root); };
+  void postOrder() const { postOrder(root); };
+
+private:
+  BSTNode<T> *root;
+
+  void preOrder(BSTNode<T> *node) const {
     if (!node)
       return;
-
-    deleteNode(node->LeftChild);
-    deleteNode(node->RightChild);
-    delete node;
+    std::cout << node->data << " ";
+    preOrder(node->LeftChild);
+    preOrder(node->RightChild);
   };
-
-  void insertNode(TreeNode<T> *&parent, TreeNode<T> *newNode) {
-    if (!parent) {
-      parent = newNode;
-      return;
-    }
-
-    if (*newNode < parent)
-      insertNode(parent->LeftChild, newNode);
-    else
-      insertNode(parent->RightChild, newNode);
-  };
-
-  void traverse(TreeNode<T> *node, int order = INORDER) const {
+  void inOrder(BSTNode<T> *node) const {
     if (!node)
       return;
-
-    switch (order) {
-    case PREORDER:
-      std::cout << node << " ";
-      traverse(node->LeftChild, order);
-      traverse(node->RightChild, order);
-      break;
-    case INORDER:
-      traverse(node->LeftChild, order);
-      std::cout << node << " ";
-      traverse(node->RightChild, order);
-      break;
-    case POSTORDER:
-      traverse(node->LeftChild, order);
-      traverse(node->RightChild, order);
-      std::cout << node << " ";
-      break;
-    default:
-      break;
-    }
+    inOrder(node->LeftChild);
+    std::cout << node->data << " ";
+    inOrder(node->RightChild);
+  };
+  void postOrder(BSTNode<T> *node) const {
+    if (!node)
+      return;
+    postOrder(node->LeftChild);
+    postOrder(node->RightChild);
+    std::cout << node->data << " ";
   };
 
-  int height(const TreeNode<T> *node) const {
-    if (!node)
+  int height(BSTNode<T> *node) const {
+    if (!node || (!node->LeftChild && !node->RightChild))
       return 0;
 
     int hLeft = height(node->LeftChild);
@@ -97,140 +76,111 @@ template <class T> class Tree {
     return (hLeft > hRight) ? hLeft + 1 : hRight + 1;
   };
 
-  int heightBF(const TreeNode<T> *node) const {
-    return (!node) ? 0 : height(node->LeftChild) - height(node->RightChild);
+  int weight(BSTNode<T> *node) const {
+    return (node) ? weight(node->LeftChild) + weight(node->RightChild) + 1 : 0;
   };
-  int weightBF(const TreeNode<T> *node) const {
-    return (!node) ? 0 : weight(node->LeftChild) - weight(node->RightChild);
+  int heightBF(BSTNode<T> *node) const {
+    return height(node->LeftChild) - height(node->RightChild);
+  };
+  int weightBF(BSTNode<T> *node) const {
+    return weight(node->LeftChild) - weight(node->RightChild);
   };
 
-  void printTree() const {
-    if (!root) {
-      std::cout << "The tree is empty." << std::endl;
+  void deleteNode(BSTNode<T> *node) {
+    if (!node)
       return;
-    }
 
-    int h = height(root);
-    int maxWidth = std::pow(2, h) - 1;
+    deleteNode(node->LeftChild);
+    deleteNode(node->RightChild);
+    delete node;
+  };
+};
 
-    std::vector<TreeNode<T> *> currentLevel;
-    currentLevel.push_back(root);
-    std::vector<TreeNode<T> *> nextLevel;
+template <class T> // Driver
+BSTNode<T> *BST<T>::Search(const Element<T> &x)
+/* Search the binary search tree (*this) for an element with key x. If such an
+   element is found, return a pointer to the node that contains it. */
+{
+  return Search(root, x);
+}
 
-    int depth = 0;
-    while (!currentLevel.empty() && depth < h) {
-      int indent = std::pow(2, h - depth - 1) - 1;
-      int betweenSpaces = std::pow(2, h - depth) - 1;
+template <class T> // Workhorse
+BSTNode<T> *BST<T>::Search(BSTNode<T> *b, const Element<T> &x) {
+  if (!b)
+    return 0;
+  if (x.key == b->data.key)
+    return b;
+  if (x.key < b->data.key)
+    return Search(b->LeftChild, x);
+  return Search(b->RightChild, x);
+} // recursive version
 
-      std::cout << std::string(indent * 2, ' ');
+template <class T>
+BSTNode<T> *BST<T>::IterSearch(const Element<T> &x)
+/* Search the binary search tree for an element with key x */
+{
+  for (BSTNode<T> *t = root; t;) {
+    if (x.key == t->data.key)
+      return t;
+    if (x.key < t->data.key)
+      t = t->LeftChild;
+    else
+      t = t->RightChild;
+  }
+  return 0;
+} // Iterative version
 
-      for (auto node : currentLevel) {
-        if (node) {
-          std::cout << std::setw(2) << node->data;
-          nextLevel.push_back(node->LeftChild);
-          nextLevel.push_back(node->RightChild);
-        } else {
-          std::cout << "  ";
-          nextLevel.push_back(nullptr);
-          nextLevel.push_back(nullptr);
-        }
+template <class T> void BST<T>::Insert(const Element<T> &x) {
+  BSTNode<T> *p = root, *pp = nullptr;
 
-        std::cout << std::string(betweenSpaces * 2, ' ');
-      }
-      std::cout << std::endl;
-
-      currentLevel = nextLevel;
-      nextLevel.clear();
-      depth++;
-    }
-
-    for (int i = 0; i < maxWidth; i++)
-      std::cout << "__";
-    std::cout << std::endl;
+  while (p) {
+    pp = p;
+    if (x.key < p->data)
+      p = p->LeftChild;
+    else if (x.key > p->data)
+      p = p->RightChild;
+    else
+      return;
   }
 
-  int weight(TreeNode<T> *node) const {
-    if (!node)
-      return 0;
-    if (!node->LeftChild && !node->RightChild)
-      return 1;
+  p = new BSTNode<T>(x);
+  if (root) {
+    if (x.key < pp->data)
+      pp->LeftChild = p;
+    else
+      pp->RightChild = p;
+  } else {
+    root = p;
+  }
+}
 
-    return weight(node->LeftChild) + weight(node->RightChild) + 1;
-  };
-
-public:
-  Tree() : root(nullptr) {};
-  ~Tree() { deleteNode(root); };
-
-  void insert(T k);
-  void preOrder() const;
-  void inOrder() const;
-  void postOrder() const;
-
-  int height() const;
-  int weight() const;
-  int heightBF() const;
-  int weightBF() const;
-
-  friend std::ostream &operator<<(std::ostream &out, const Tree<T> *tree) {
-    tree->printTree();
-    return out;
-  };
-
-  friend std::ostream &operator<<(std::ostream &out, const Tree<T> &tree) {
-    tree.printTree();
-    return out;
-  };
-};
-
-template <class T> void Tree<T>::insert(T k) {
-  TreeNode<T> *newNode = new TreeNode<T>(k);
-  insertNode(root, newNode);
-};
-
-template <class T> void Tree<T>::preOrder() const { traverse(root, PREORDER); };
-template <class T> void Tree<T>::inOrder() const { traverse(root); };
-template <class T> void Tree<T>::postOrder() const {
-  traverse(root, POSTORDER);
-};
-template <class T> int Tree<T>::height() const { return height(root) - 1; };
-template <class T> int Tree<T>::weight() const { return weight(root); };
-template <class T> int Tree<T>::heightBF() const { return heightBF(root); };
-template <class T> int Tree<T>::weightBF() const { return weightBF(root); };
+template <class T> int BST<T>::height() const { return height(root); };
+template <class T> int BST<T>::weight() const { return weight(root); };
+template <class T> int BST<T>::heightBF() const { return heightBF(root); };
+template <class T> int BST<T>::weightBF() const { return weightBF(root); };
 
 // int main() {
-//   srand(time(NULL));
-//   Tree<int> bst;
-//   std::string cmd;
-//   int v;
-// 
-//   while (std::getline(std::cin, cmd)) {
-//     std::stringstream ss(cmd);
-//     ss >> cmd;
-//     if (cmd == "insert") {
-//       ss >> cmd;
-//       v = std::stoi(cmd);
-//       bst.insert(v);
-//     } else if (cmd == "preorder")
-//       bst.preOrder();
-//     else if (cmd == "inorder")
-//       bst.inOrder();
-//     else if (cmd == "postorder")
-//       bst.postOrder();
-//     else if (cmd == "height")
-//       std::cout << "Height: " << bst.height() << std::endl;
-//     else if (cmd == "weight")
-//       std::cout << "Weight: " << bst.weight() << std::endl;
-//     else if (cmd == "heightBF")
-//       std::cout << "HeightBF: " << bst.heightBF() << std::endl;
-//     else if (cmd == "weightBF")
-//       std::cout << "WeightBF: " << bst.weightBF() << std::endl;
-//     else if (cmd == "print")
-//       std::cout << bst << std::endl;
-//     else if (cmd == "exit")
-//       break;
-//     std::cout << "\n" << bst << std::endl;
+//   BST<int> tree;
+//   int sample[] = {10, 6, 15, 3, 9, 11, 19, 2, 4, 7, 12, 16, 20, 21, 17};
+//
+//   int i, v;
+//   for (i = 0; i < sizeof(sample) / sizeof(sample[0]); i++) {
+//     Element<int> e;
+//     e.key = sample[i];
+//     tree.Insert(e);
 //   }
-// 
+//
+//   tree.preOrder();
+//   std::cout << std::endl;
+//   tree.inOrder();
+//   std::cout << std::endl;
+//   tree.postOrder();
+//   std::cout << std::endl;
+//
+//   std::cout << "Height: " << tree.height() << std::endl;
+//   std::cout << "Weight: " << tree.weight() << std::endl;
+//   std::cout << "HeightBF: " << tree.heightBF() << std::endl;
+//   std::cout << "WeightBF: " << tree.weightBF() << std::endl;
+//
 //   return 0;
-// }
+// };

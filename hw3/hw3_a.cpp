@@ -1,184 +1,106 @@
+#include <ctime>
 #include <iostream>
 #include <sstream>
 #include <string>
 
-enum Boolean { FALSE, TRUE };
+using namespace std;
+
 template <class T> class List;
-template <class T> class ListIterator;
+
 template <class T> class ListNode {
+public:
+  ListNode(T d) : data(d), link(nullptr) {};
+  friend class List<T>;
+
+private:
   T data;
-  ListNode *link;
-
-public:
-  ListNode() : link(nullptr) {};
-  ListNode(T d, ListNode *l = nullptr) : data(d), link(l) {};
-  ~ListNode() {};
-
-  friend class List<T>;
-  friend class ListIterator<T>;
-
-  friend std::ostream &operator<<(std::ostream &out, const ListNode<T> *node) {
-    if (node)
-      out << node->data;
-    return out;
-  };
-};
-
-template <class T> class ListIterator {
-  const List<T> *list;
-  ListNode<T> *current;
-
-  friend class List<T>;
-
-public:
-  ListIterator(const List<T> &l) : list(&l), current(l.first) {};
-  ListIterator(const List<T> *l) : list(l), current(l->first) {};
-  ~ListIterator() {};
-
-  ListIterator &operator++() {
-    current = (current) ? current->link : nullptr;
-    return *this;
-  };
-
-  bool NotNull() { return current != nullptr; };
-  bool NextNotNull() { return NotNull() && current->link; };
-  T *First() { return (list) ? &list->first->data : nullptr; };
-  T *Last() { return (list) ? &list->last->data : nullptr; };
+  ListNode<T> *link;
 };
 
 template <class T> class List {
-  ListNode<T> *first, *last;
-  friend class ListIterator<T>;
-
-  void deleteNode(ListNode<T> *n) {
-    if (n) {
-      deleteNode(n->link);
-      delete n;
-    }
-  };
-
-  int count(ListNode<T> *n) const { return (n) ? count(n->link) + 1 : 0; };
-  int count() const { return count(this->first); }
-
 public:
-  List() : first(nullptr), last(nullptr) {};
-  ~List() { deleteNode(first); };
-
+  List() { first = last = 0; }
   void Attach(T k);
-  void Invert();
-  void Concatenate(List<T> b);
-  bool appearM(T k, int m);
+  int appearM(T k, int m) const;
   int replaceALL(T a1, T a2);
-  void rotate(char c, int k);
+  void rotate(char direction, int n);
   List<T> subList(int start, int end);
 
-  friend std::ostream &operator<<(std::ostream &out, const List<T> *l) {
-    ListIterator<T> it(*l);
+private:
+  ListNode<T> *first;
+  ListNode<T> *last;
 
-    while (it.NotNull()) {
-      out << it.current->data;
-      if (it.NextNotNull())
-        out << " ";
-      ++it;
-    }
-    return out;
+  int appear(ListNode<T> *node, T k) const {
+    return (node) ? (node->data == k) + appear(node->link, k) : 0;
   };
 
-  friend std::ostream &operator<<(std::ostream &out, const List<T> &l) {
-    ListIterator<T> it(l);
-
-    while (it.NotNull()) {
-      out << it.current->data;
-      if (it.NextNotNull())
-        out << " ";
-      ++it;
+  int replaceALL(ListNode<T> *node, T a, T b) {
+    if (!node)
+      return 0;
+    if (node->data == a) {
+      node->data = b;
+      return replaceALL(node->link, a, b) + 1;
     }
+
+    return replaceALL(node->link, a, b);
+  };
+
+  int count(ListNode<T> *node) { return (node) ? count(node->link) + 1 : 0; };
+
+  friend std::ostream &operator<<(std::ostream &out, const List<T> &list) {
+    ListNode<T> *tmp = list.first;
+    while (tmp) {
+      out << tmp->data;
+      if (tmp->link)
+        out << " ";
+      tmp = tmp->link;
+    }
+
     return out;
   };
 };
 
 template <class T> void List<T>::Attach(T k) {
-  ListNode<T> *newNode = new ListNode<T>(k);
-
-  if (!first)
-    first = last = newNode;
+  ListNode<T> *newnode = new ListNode<T>(k);
+  if (first == 0)
+    first = last = newnode;
   else {
-    last->link = newNode;
-    last = newNode;
+    last->link = newnode;
+    last = newnode;
   }
 };
 
-template <class T> void List<T>::Invert() {
-  ListNode<T> *p = first, *q = nullptr;
-
-  while (p) {
-    ListNode<T> *r = q;
-    q = p;
-    p = p->link;
-    q->link = r;
-  }
-  first = q;
+template <class T> int List<T>::appearM(T k, int m) const {
+  return appear(first, k) == m;
 };
 
-template <class T> void List<T>::Concatenate(List<T> b) {
-  if (!first) {
-    first = b.first;
+template <class T> int List<T>::replaceALL(T a, T b) {
+  return (a == b) ? 0 : replaceALL(first, a, b);
+};
+
+template <class T> void List<T>::rotate(char direction, int k) {
+  if (direction != 'L' && direction != 'R') {
+    std::cerr << "Invalid rotation direction" << std::endl;
     return;
   }
 
-  if (b.first) {
-    ListNode<T> *p;
-    for (p = first; p->link; p = p->link)
-      ;
-    p->link = b.first;
-  }
-};
+  std::cout << "Rotating list " << k << " time(s)" << std::endl;
 
-template <class T> bool List<T>::appearM(T k, int m) {
-  int count = 0;
-  ListIterator<T> it(*this);
-
-  while (it.NotNull()) {
-    count += !!(it.current->data == k);
-    ++it;
-  }
-
-  return count == m;
-};
-
-template <class T> int List<T>::replaceALL(T a1, T a2) {
-  int count = 0;
-  ListIterator<T> it(*this);
-
-  while (it.NotNull()) {
-    if (it.current->data == a1) {
-      it.current->data = a2;
-      count++;
-    }
-    ++it;
-  }
-
-  return count;
-};
-
-template <class T> void List<T>::rotate(char c, int k) {
-  if (c != 'R' && c != 'L')
-    return;
-
-  int n = count(), steps = 0, travelSteps = (c == 'R') ? n - (k % n) : (k % n);
+  ListNode<T> *pTrav;
+  int n = count(first);
+  int travelSteps = (direction == 'R') ? n - (k % n) : k % n;
 
   last->link = first;
-  while (first && steps < travelSteps) {
+
+  while (travelSteps--) {
     last = first;
     first = first->link;
-    steps++;
   }
-
   last->link = nullptr;
 };
 
 template <class T> List<T> List<T>::subList(int start, int end) {
-  int n = count(), i = 0;
+  int n = count(first), i = 0;
   List<T> sList;
   ListNode<T> *p;
 
@@ -194,57 +116,49 @@ template <class T> List<T> List<T>::subList(int start, int end) {
   return sList;
 };
 
-// int main (int argc, char *argv[]) {
-//   std::string cmd;
-//   char v, w;
-//   int i, j;
-//   List<char>* list = new List<char>();
-//   std::cout << "List created!" << std::endl;
-//
-//   while (std::getline(std::cin, cmd)) {
-//     std::stringstream ss(cmd);
-//     ss >> cmd;
-//
-//     if (cmd == "attach") {
-//       ss >> cmd;
-//       v = cmd[0];
-//       list->Attach(v);
-//     } else if (cmd == "invert")
-//       list->Invert();
-//     else if (cmd == "appear") {
-//       ss >> cmd;
-//       v = cmd[0];
-//       ss >> cmd;
-//       w = cmd[0];
-//
-//       std::cout << v << " does";
-//       if (!list->appearM(v, w)) std::cout << " not";
-//       std::cout << " appear " << w << " time(s)." << std::endl;
-//     } else if (cmd == "replace") {
-//       ss >> cmd;
-//       v = cmd[0];
-//       ss >> cmd;
-//       w = cmd[0];
-//       std::cout << "Made " << list->replaceALL(v, w) << " replacement(s)" <<
-//       std::endl;
-//     } else if (cmd == "rotate") {
-//       ss >> cmd;
-//       v = cmd[0];
-//       ss >> cmd;
-//       i = std::stoi(cmd);
-//       list->rotate(v, i);
-//     } else if (cmd == "sublist") {
-//       ss >> cmd;
-//       i = std::stoi(cmd);
-//       ss >> cmd;
-//       j = std::stoi(cmd);
-//       std::cout << "SubList: " << list->subList(i, j) << std::endl;
-//     }
-//     else if (cmd == "exit")
-//       break;
-//     std::cout << "List: " << list << "\n" << std::endl;
-//   }
-//
-//   delete list;
+// int main() {
+//   srand(time(NULL));
+//   List<int> list;
+//   std::string s;
+//   int i, m, result;
+//   char direction;
+// 
+//   for (i = 0; i < 10; i++)
+//     list.Attach(rand() % 5);
+//   std::cout << list << std::endl;
+// 
+//   std::cout << "Sublist: " << std::endl;
+//   std::getline(std::cin, s);
+//   std::stringstream sss(s);
+//   sss >> s;
+//   i = std::stoi(s);
+//   sss >> s;
+//   m = std::stoi(s);
+//   std::cout << "Sublist: " << list.subList(i, m) << std::endl;
+// 
+//   std::cout << "Rotate: " << std::endl;
+//   std::getline(std::cin, s);
+//   std::stringstream ss(s);
+//   ss >> s;
+//   direction = s[0];
+//   ss >> s;
+//   m = std::stoi(s);
+//   list.rotate(direction, m);
+//   std::cout << list << std::endl;
+// 
+//   std::cout << "ReplaceALL: " << std::endl;
+//   std::getline(std::cin, s);
+//   std::stringstream sss(s);
+//   sss >> s;
+//   i = std::stoi(s);
+//   sss >> s;
+//   m = std::stoi(s);
+//   int count = list.replaceALL(i, m);
+//   if (count)
+//     std::cout << "Made " << count << " replacements " << std::endl;
+//   else
+//     std::cout << "Made no replacements " << std::endl;
+//   std::cout << list << std::endl;
+// 
 //   return 0;
-// }
+// };

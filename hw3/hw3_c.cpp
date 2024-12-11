@@ -1,108 +1,81 @@
-#include <cmath>
 #include <ctime>
-#include <iomanip>
 #include <iostream>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
 
-enum Order { PREORDER, INORDER, POSTORDER };
+template <class T> class Element {
+public:
+  T key;
+};
 
-template <class T> class ParentChild;
-template <class T> class Tree;
-template <class T> class TreeNode {
-  TreeNode *LeftChild;
-  TreeNode *RightChild;
-  T data;
-
-  friend class ParentChild<T>;
-  friend class Tree<T>;
+template <class T> class BST;
+template <class T> class BSTNode {
+  friend class Tree;
 
 public:
-  TreeNode() {};
-  TreeNode(T d, TreeNode *l = nullptr, TreeNode *r = nullptr)
-      : LeftChild(l), RightChild(r), data(d) {};
-  ~TreeNode() {};
+  BSTNode();
+  BSTNode(const Element<T> &x) { data = x.key; };
+  BSTNode(T &d) { data = d; }
 
-  bool operator<(const TreeNode<T> *other) const {
-    return (other) ? data < other->data : false;
-  };
+private:
+  BSTNode *LeftChild;
+  T data;
+  BSTNode *RightChild;
 
-  bool operator>(const TreeNode<T> *other) const {
-    return (other) ? data > other->data : false;
-  };
-
-  friend std::ostream &operator<<(std::ostream &out, const TreeNode<T> *node) {
+  friend class BST<T>;
+  friend std::ostream &operator<<(std::ostream &out, const BSTNode<T> *node) {
     if (node)
       out << node->data;
     return out;
   };
 };
 
-template <class T> class ParentChild {
-  TreeNode<T> *node;
-  TreeNode<T> *parent;
-
-  friend class Tree<T>;
-
+template <class T> class BST {
 public:
-  ParentChild() : node(nullptr), parent(nullptr) {};
-  ~ParentChild() {};
-};
+  BST() : root(nullptr), isReversed(false) {};
+  ~BST() { deleteNode(root); };
 
-template <class T> class Tree {
-  TreeNode<T> *root;
+  // Tree operations
+  BSTNode<T> *Search(const Element<T> &x);
+  BSTNode<T> *Search(BSTNode<T> *b, const Element<T> &x);
+  BSTNode<T> *IterSearch(const Element<T> &x);
+  void Insert(const Element<T> &x);
+  int height() const;
+  int weight() const;
+  int heightBF() const;
+  int weightBF() const;
+  void reverse();
+
+  void preOrder() const { preOrder(root); };
+  void inOrder() const { inOrder(root); };
+  void postOrder() const { postOrder(root); };
+
+private:
+  BSTNode<T> *root;
   bool isReversed;
 
-  void deleteNode(TreeNode<T> *node) {
+  void preOrder(BSTNode<T> *node) const {
     if (!node)
       return;
-
-    deleteNode(node->LeftChild);
-    deleteNode(node->RightChild);
-    delete node;
+    std::cout << node->data << " ";
+    preOrder(node->LeftChild);
+    preOrder(node->RightChild);
   };
-
-  void insertNode(TreeNode<T> *&parent, TreeNode<T> *newNode) {
-    if (!parent) {
-      parent = newNode;
-      return;
-    }
-
-    if (*newNode < parent)
-      insertNode(parent->LeftChild, newNode);
-    else
-      insertNode(parent->RightChild, newNode);
-  };
-
-  void traverse(TreeNode<T> *node, int order = INORDER) const {
+  void inOrder(BSTNode<T> *node) const {
     if (!node)
       return;
-
-    switch (order) {
-    case PREORDER:
-      std::cout << node << " ";
-      traverse(node->LeftChild, order);
-      traverse(node->RightChild, order);
-      break;
-    case INORDER:
-      traverse(node->LeftChild, order);
-      std::cout << node << " ";
-      traverse(node->RightChild, order);
-      break;
-    case POSTORDER:
-      traverse(node->LeftChild, order);
-      traverse(node->RightChild, order);
-      std::cout << node << " ";
-      break;
-    default:
-      break;
-    }
+    inOrder(node->LeftChild);
+    std::cout << node->data << " ";
+    inOrder(node->RightChild);
+  };
+  void postOrder(BSTNode<T> *node) const {
+    if (!node)
+      return;
+    postOrder(node->LeftChild);
+    postOrder(node->RightChild);
+    std::cout << node->data << " ";
   };
 
-  int height(const TreeNode<T> *node) const {
-    if (!node)
+  int height(BSTNode<T> *node) const {
+    if (!node || (!node->LeftChild && !node->RightChild))
       return 0;
 
     int hLeft = height(node->LeftChild);
@@ -111,280 +84,169 @@ template <class T> class Tree {
     return (hLeft > hRight) ? hLeft + 1 : hRight + 1;
   };
 
-  int heightBF(const TreeNode<T> *node) const {
-    return (!node) ? 0 : height(node->LeftChild) - height(node->RightChild);
+  int weight(BSTNode<T> *node) const {
+    return (node) ? weight(node->LeftChild) + weight(node->RightChild) + 1 : 0;
   };
-  int weightBF(const TreeNode<T> *node) const {
-    return (!node) ? 0 : weight(node->LeftChild) - weight(node->RightChild);
+  int heightBF(BSTNode<T> *node) const {
+    return height(node->LeftChild) - height(node->RightChild);
+  };
+  int weightBF(BSTNode<T> *node) const {
+    return weight(node->LeftChild) - weight(node->RightChild);
   };
 
-  void reverse(TreeNode<T> *node) {
-    if (!node || (!node->LeftChild && !node->RightChild))
+  void reverse(BSTNode<T> *node) {
+    if (!node)
       return;
 
     reverse(node->LeftChild);
     reverse(node->RightChild);
-
-    TreeNode<T> *tmp = node->RightChild;
-    node->RightChild = node->LeftChild;
-    node->LeftChild = tmp;
+    BSTNode<T> *tmp = node->LeftChild;
+    node->LeftChild = node->RightChild;
+    node->RightChild = tmp;
   };
 
-  int weight(TreeNode<T> *node) const {
+  void deleteNode(BSTNode<T> *node) {
     if (!node)
-      return 0;
-    if (!node->LeftChild && !node->RightChild)
-      return 1;
+      return;
 
-    return weight(node->LeftChild) + weight(node->RightChild) + 1;
+    deleteNode(node->LeftChild);
+    deleteNode(node->RightChild);
+    delete node;
   };
+};
 
-  bool isTreeReversed() const { return isReversed; };
+template <class T> // Driver
+BSTNode<T> *BST<T>::Search(const Element<T> &x)
+/* Search the binary search tree (*this) for an element with key x. If such an
+   element is found, return a pointer to the node that contains it. */
+{
+  return Search(root, x);
+}
 
-  T *Get(TreeNode<T> *node, T target) const {
-    if (!node)
-      return nullptr;
-    if (target == node->data)
-      return &node->data;
+template <class T> // Workhorse
+BSTNode<T> *BST<T>::Search(BSTNode<T> *b, const Element<T> &x) {
+  if (!b)
+    return 0;
+  if (x.key == b->data)
+    return b;
 
-    if (isTreeReversed())
-      return (node->data > target) ? Get(node->RightChild, target)
-                                   : Get(node->LeftChild, target);
+  if (isReversed)
+    return (x.key > b->data) ? Search(b->LeftChild, x)
+                             : Search(b->RightChild, x);
+  else
+    return (x.key < b->data) ? Search(b->LeftChild, x)
+                             : Search(b->RightChild, x);
+} // recursive version
+
+template <class T>
+BSTNode<T> *BST<T>::IterSearch(const Element<T> &x)
+/* Search the binary search tree for an element with key x */
+{
+  for (BSTNode<T> *t = root; t;) {
+    if (x.key == t->data.key)
+      return t;
+    if (x.key < t->data.key)
+      t = t->LeftChild;
     else
-      return (node->data < target) ? Get(node->RightChild, target)
-                                   : Get(node->LeftChild, target);
-  };
+      t = t->RightChild;
+  }
+  return 0;
+} // Iterative version
 
-  bool deleteNode(TreeNode<T> *parent, TreeNode<T> *node, T target) {
-    if (!node)
-      return false;
+template <class T> void BST<T>::Insert(const Element<T> &x) {
+  BSTNode<T> *p = root, *pp = nullptr;
 
-    if (node->data == target) {
-      TreeNode<T> *successor = nullptr;
-      ParentChild<T> *pc = nullptr;
-
-      if (node->LeftChild && !node->RightChild)
-        successor = node->LeftChild;
-      else if (node->RightChild && !node->LeftChild)
-        successor = node->RightChild;
-      else if (node->LeftChild && node->RightChild)
-        pc = findRightMostNode(node->LeftChild);
-
-      if (!successor && !pc) {
-        if (parent) {
-          if (parent->LeftChild == node)
-            parent->LeftChild = nullptr;
-          else
-            parent->RightChild = nullptr;
-        } else
-          root = nullptr;
-
-        delete node;
-      } else if (successor) {
-        swap(successor, node);
-        node->LeftChild = successor->LeftChild;
-        node->RightChild = successor->RightChild;
-        delete successor;
-      } else {
-        swap(pc->node, node);
-        if (pc->parent)
-          pc->parent->RightChild = nullptr;
-        else
-          node->LeftChild = pc->node->LeftChild;
-        delete pc->node;
-      }
-      return true;
-    } else {
-      if (isTreeReversed())
-        return (target < node->data)
-                   ? deleteNode(node, node->RightChild, target)
-                   : deleteNode(node, node->LeftChild, target);
+  while (p) {
+    pp = p;
+    if (isReversed)
+      p = (x.key < p->data) ? p->RightChild : p->LeftChild;
+    else {
+      if (x.key < p->data)
+        p = p->LeftChild;
+      else if (x.key > p->data)
+        p = p->RightChild;
       else
-        return (target > node->data)
-                   ? deleteNode(node, node->RightChild, target)
-                   : deleteNode(node, node->LeftChild, target);
+        return;
     }
   }
 
-  ParentChild<T> *findRightMostNode(TreeNode<T> *node) {
-    if (!node)
-      return nullptr;
-
-    ParentChild<T> *pc = new ParentChild<T>();
-    if (!node->RightChild) {
-      pc->node = node;
-      return pc;
+  p = new BSTNode<T>(x);
+  if (root) {
+    if (isReversed) {
+      if (x.key < pp->data)
+        pp->RightChild = p;
+      else
+        pp->LeftChild = p;
+    } else {
+      if (x.key < pp->data)
+        pp->LeftChild = p;
+      else
+        pp->RightChild = p;
     }
-
-    if (!node->RightChild->RightChild) {
-      pc->parent = node;
-      pc->node = node->RightChild;
-      return pc;
-    } else
-      return findRightMostNode(node->RightChild);
-  };
-
-  void swap(TreeNode<T> *a, TreeNode<T> *b) {
-    if (!a || !b || a == b)
-      return;
-
-    T tmp = a->data;
-    a->data = b->data;
-    b->data = tmp;
-  };
-
-  void printTree() const {
-    if (!root) {
-      std::cout << "The tree is empty." << std::endl;
-      return;
-    }
-
-    int h = height(root);
-    int maxWidth = std::pow(2, h) - 1;
-
-    std::vector<TreeNode<T> *> currentLevel;
-    currentLevel.push_back(root);
-    std::vector<TreeNode<T> *> nextLevel;
-
-    int depth = 0;
-    while (!currentLevel.empty() && depth < h) {
-      int indent = std::pow(2, h - depth - 1) - 1;
-      int betweenSpaces = std::pow(2, h - depth) - 1;
-
-      std::cout << std::string(indent * 2, ' ');
-
-      for (auto node : currentLevel) {
-        if (node) {
-          std::cout << std::setw(2) << node->data;
-          nextLevel.push_back(node->LeftChild);
-          nextLevel.push_back(node->RightChild);
-        } else {
-          std::cout << "  ";
-          nextLevel.push_back(nullptr);
-          nextLevel.push_back(nullptr);
-        }
-
-        std::cout << std::string(betweenSpaces * 2, ' ');
-      }
-      std::cout << std::endl;
-
-      currentLevel = nextLevel;
-      nextLevel.clear();
-      depth++;
-    }
-
-    for (int i = 0; i < maxWidth; i++)
-      std::cout << "__";
-    std::cout << std::endl;
+  } else {
+    root = p;
   }
+}
 
-public:
-  Tree() : root(nullptr), isReversed(false) {};
-  ~Tree() { deleteNode(root); };
-
-  void insert(T k);
-  void preOrder() const;
-  void inOrder() const;
-  void postOrder() const;
-
-  int height() const;
-  int weight() const;
-  int heightBF() const;
-  int weightBF() const;
-  void reverse();
-  T *Get(T k) const;
-  bool deleteNode(T k);
-
-  friend std::ostream &operator<<(std::ostream &out, const Tree<T> *tree) {
-    tree->printTree();
-    return out;
-  };
-
-  friend std::ostream &operator<<(std::ostream &out, const Tree<T> &tree) {
-    tree.printTree();
-    return out;
-  };
-};
-
-template <class T> void Tree<T>::insert(T k) {
-  TreeNode<T> *newNode = new TreeNode<T>(k);
-  insertNode(root, newNode);
-};
-
-template <class T> void Tree<T>::preOrder() const { traverse(root, PREORDER); };
-template <class T> void Tree<T>::inOrder() const { traverse(root); };
-template <class T> void Tree<T>::postOrder() const {
-  traverse(root, POSTORDER);
-};
-template <class T> int Tree<T>::height() const { return height(root) - 1; };
-template <class T> int Tree<T>::weight() const { return weight(root); };
-template <class T> int Tree<T>::heightBF() const { return heightBF(root); };
-template <class T> int Tree<T>::weightBF() const { return weightBF(root); };
-template <class T> void Tree<T>::reverse() {
+template <class T> int BST<T>::height() const { return height(root); };
+template <class T> int BST<T>::weight() const { return weight(root); };
+template <class T> int BST<T>::heightBF() const { return heightBF(root); };
+template <class T> int BST<T>::weightBF() const { return weightBF(root); };
+template <class T> void BST<T>::reverse() {
   reverse(root);
   isReversed = !isReversed;
-};
-template <class T> T *Tree<T>::Get(T value) const { return Get(root, value); };
-template <class T> bool Tree<T>::deleteNode(T value) {
-  return deleteNode(nullptr, root, value);
 };
 
 // int main() {
 //   srand(time(NULL));
-//   Tree<int> bst;
-//   std::string cmd;
-//   int v;
-//   int *searchResult;
-//   int sample[] = {10, 7, 15, 3, 9, 24, 1, 8, 20, 27, 4, 6, 17, 22, 25, 30};
-//   int n = sizeof(sample) / sizeof(sample[0]);
-//   for (int i = 0; i < n; i++)
-//     bst.insert(sample[i]);
-//   std::cout << bst << std::endl;
-// 
-//   while (std::getline(std::cin, cmd)) {
-//     std::stringstream ss(cmd);
-//     ss >> cmd;
-//     if (cmd == "insert") {
-//       ss >> cmd;
-//       v = std::stoi(cmd);
-//       bst.insert(v);
-//     } else if (cmd == "preorder")
-//       bst.preOrder();
-//     else if (cmd == "inorder")
-//       bst.inOrder();
-//     else if (cmd == "postorder")
-//       bst.postOrder();
-//     else if (cmd == "height")
-//       std::cout << "Height: " << bst.height() << std::endl;
-//     else if (cmd == "weight")
-//       std::cout << "Weight: " << bst.weight() << std::endl;
-//     else if (cmd == "heightBF")
-//       std::cout << "HeightBF: " << bst.heightBF() << std::endl;
-//     else if (cmd == "weightBF")
-//       std::cout << "WeightBF: " << bst.weightBF() << std::endl;
-//     else if (cmd == "reverse")
-//       bst.reverse();
-//     else if (cmd == "get") {
-//       ss >> cmd;
-//       v = std::stoi(cmd);
-//       searchResult = bst.Get(v);
-//       if (searchResult)
-//         std::cout << *searchResult << " found" << std::endl;
-//       else
-//         std::cout << v << " not found" << std::endl;
-//     } else if (cmd == "delete") {
-//       ss >> cmd;
-//       v = std::stoi(cmd);
-//       if (bst.deleteNode(v))
-//         std::cout << v << " was removed from tree" << std::endl;
-//       else
-//         std::cout << "Could not find " << v << std::endl;
-//     } else if (cmd == "print")
-//       std::cout << bst << std::endl;
-//     else if (cmd == "exit")
-//       break;
-//     std::cout << "\n" << bst << std::endl;
+//   BST<int> tree;
+//   int sample[] = { 10, 6, 15, 3, 9, 11, 19, 2, 4, 7, 12, 16, 20};
+//   Element<int> e;
+//
+//   int i, v;
+//   for (i = 0; i < sizeof(sample) / sizeof(sample[0]); i++) {
+//     e.key = sample[i];
+//     tree.Insert(e);
 //   }
-// 
+//
+//   tree.preOrder();
+//   std::cout << std::endl;
+//   tree.inOrder();
+//   std::cout << std::endl;
+//   tree.postOrder();
+//   std::cout << std::endl;
+//
+//   tree.reverse();
+//   tree.inOrder();
+//   std::cout << std::endl;
+//
+//   std::cout << "Height: " << tree.height() << std::endl;
+//   std::cout << "Weight: " << tree.weight() << std::endl;
+//   std::cout << "HeightBF: " << tree.heightBF() << std::endl;
+//   std::cout << "WeightBF: " << tree.weightBF() << std::endl;
+//
+//   for (i = 0; i < 5; i++) {
+//     e.key = rand() % 100;
+//     std::cout << "Inserting: " << e.key << std::endl;
+//     tree.inOrder();
+//     std::cout << std::endl;
+//     tree.Insert(e);
+//   }
+//
+//
+//   tree.reverse();
+//   tree.inOrder();
+//   std::cout << std::endl;
+//
+//   std::cout << "Enter the number to search: ";
+//   std::cin >> v;
+//   e.key = v;
+//   BSTNode<int>* target = tree.Search(e);
+//   if (!target)
+//     std::cout << v << " not found" << std::endl;
+//   else
+//     std::cout << v << " found at " << target << std::endl;
+//
 //   return 0;
-// }
+// };
+//

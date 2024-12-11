@@ -316,19 +316,19 @@ template <class T> void LinkedBinaryTree<T>::insert(T data) {
 // int main() {
 //   std::string s;
 //   LinkedBinaryTree<char> tree;
-// 
+//
 //   std::cout << "Enter a text: ";
 //   std::getline(std::cin, s);
 //   int n = s.length();
 //   char arr[n + 1];
 //   std::strcpy(arr, s.c_str());
-// 
+//
 //   for (int i = 0; i < n; i++)
 //     tree.insert(arr[i]);
-// 
+//
 //   std::cout << tree << std::endl;
 //   std::cout << "Header List:\n" << tree.getHeaderList() << std::endl;
-// 
+//
 //   return 0;
 // }
-// 
+//
