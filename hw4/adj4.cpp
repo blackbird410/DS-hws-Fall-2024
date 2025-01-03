@@ -1,16 +1,17 @@
 #include <array>
 #include <fstream>
 #include <iostream>
-#include <string>
-#include <vector>
 #include <queue>
+#include <stack>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 template <class T> class Node {
 public:
   Node() : next(nullptr) {};
   Node(const T &d) : data(d), next(nullptr) {};
-  ~Node() { delete data; };
+  ~Node() {};
 
   bool operator==(const Node<T> *other) const {
     return (other && getData() == other->getData());
@@ -37,32 +38,9 @@ template <class T> class NodeList {
 public:
   NodeList() : head(nullptr), tail(nullptr), count(0) {};
   ~NodeList() { deleteNode(head); };
- 
-  bool operator==(const NodeList& other) const {
-    Node<T> *p1 = head;
-    Node<T> *p2 = other.head;
-
-    std::cout << "Checking list equality" << std::endl;
-    if (!p1 && !p2) std::cout << "Both heads are null" << std::endl;
-    while (p1 && p2) {
-      if constexpr (std::is_pointer<T>::value) {
-        std::cout << "Checking for pointers" << std::endl;
-        if (*(p1->getData()) != *(p2->getData()))
-          return false;
-      } else {
-        std::cout << "Checking for non pointers" << std::endl;
-        if (p1->getData() != p2->getData())
-          return false;
-      }
-      p1 = p1->getNext();
-      p2 = p2->getNext();
-    }
-
-    return p1 == nullptr && p2 == nullptr;
-  }
 
   // T could be a Vertex or an Edge
-  Node<T>* exists(const T &d) {
+  Node<T> *exists(const T &d) {
     Node<T> *p = head;
 
     while (p) {
@@ -103,6 +81,7 @@ public:
         out << p;
         if (p->getNext())
           out << " ";
+        p = p->getNext();
       }
     }
 
@@ -127,17 +106,15 @@ class Edge;
 
 class Vertex {
 public:
-  Vertex(int d) : data(d), connectedEdges(new NodeList<Edge*>()) {};
-  ~Vertex() {};
+  Vertex(int d) : data(d), connectedEdges(new NodeList<Edge *>()) {};
+  ~Vertex() { delete connectedEdges; };
   bool operator==(const Vertex *other) const {
     return (other && data == other->data);
   };
 
-  bool operator==(const Vertex &other) const {
-    return (data == other.data);
-  };
+  bool operator==(const Vertex &other) const { return (data == other.data); };
 
-  bool operator!=(const Vertex& other) const { return !(*this == other); };
+  bool operator!=(const Vertex &other) const { return !(*this == other); };
 
   int getData() const { return data; };
   void setData(const int &d) { data = d; };
@@ -161,22 +138,22 @@ public:
   Edge(Vertex *u, Vertex *v, int w = 1) : vertices({u, v}), weight(w) {};
   ~Edge() {};
   bool operator==(const Edge *other) const {
-    return ( getWeight() == other->getWeight() 
-      && ((vertices[0] == other->vertices[0] 
-        && vertices[1] == other->vertices[1]) 
-      || (vertices[0] == other->vertices[1] 
-        && vertices[1] == other->vertices[0])));
+    return (getWeight() == other->getWeight() &&
+            ((vertices[0] == other->vertices[0] &&
+              vertices[1] == other->vertices[1]) ||
+             (vertices[0] == other->vertices[1] &&
+              vertices[1] == other->vertices[0])));
   };
 
-  bool operator==(const Edge& other) const {
-    return ( getWeight() == other.getWeight() 
-      && ((vertices[0] == other.vertices[0] 
-        && vertices[1] == other.vertices[1]) 
-      || (vertices[0] == other.vertices[1] 
-        && vertices[1] == other.vertices[0])));
+  bool operator==(const Edge &other) const {
+    return (getWeight() == other.getWeight() &&
+            ((vertices[0] == other.vertices[0] &&
+              vertices[1] == other.vertices[1]) ||
+             (vertices[0] == other.vertices[1] &&
+              vertices[1] == other.vertices[0])));
   };
 
-  bool operator!=(const Edge& other) const { return !(*this == other); };
+  bool operator!=(const Edge &other) const { return !(*this == other); };
 
   Vertex *getAnotherEnd(const Vertex *v) const {
     return (!v || v == vertices[1]) ? vertices[0] : vertices[1];
@@ -201,10 +178,21 @@ public:
   Graph()
       : vertexList(new NodeList<Vertex *>()),
         edgeList(new NodeList<Edge *>()) {};
+
   ~Graph() {
+    Node<Vertex *> *v = vertexList->getHead();
+    while (v) {
+      delete v->getData();
+      v = v->getNext();
+    }
+    Node<Edge *> *e = edgeList->getHead();
+    while (e) {
+      delete e->getData();
+      e = e->getNext();
+    }
     delete vertexList;
     delete edgeList;
-  };
+  }
 
   void insertVertex(int &d) {
     Vertex *v = new Vertex(d);
@@ -215,11 +203,9 @@ public:
   };
 
   void insertEdge(const int &u, const int &v, int w = 1) {
-    Vertex *v1 = new Vertex(u);
-    Vertex *v2 = new Vertex(v);
-    Vertex *uExists = vertexList->exists(v1)->getData();
-    Vertex *vExists = vertexList->exists(v2)->getData();
-    delete v1, v2;
+    Vertex v1(u), v2(v);
+    Vertex *uExists = vertexList->exists(&v1)->getData();
+    Vertex *vExists = vertexList->exists(&v2)->getData();
 
     if (!vExists || !uExists) {
       std::cerr << "Vertex not found for inserting new edge" << std::endl;
@@ -254,8 +240,11 @@ public:
   };
 
   void BFS(int start = 0) const {
-    Vertex* v = new Vertex(start);
-    Node<Vertex*>* startVertex = vertexList->exists(v);
+    // std::cout << "Vertices: " << vertexList << std::endl;
+    // std::cout << "Edges: " << edgeList << std::endl;
+
+    Vertex *v = new Vertex(start);
+    Node<Vertex *> *startVertex = vertexList->exists(v);
     if (!startVertex) {
       std::cout << "Invalid vertex for BFS" << std::endl;
       delete v;
@@ -263,11 +252,11 @@ public:
     }
     delete v;
 
-    std::unordered_map<Vertex*, bool> visited;
-    std::queue<Node<Vertex*>*> q, copy;
-    Node<Vertex*>* currentVertex;
-    Node<Edge*>* currentEdge;
-    Vertex* otherEnd;
+    std::unordered_map<Vertex *, bool> visited;
+    std::queue<Node<Vertex *> *> q, copy;
+    Node<Vertex *> *currentVertex;
+    Node<Edge *> *currentEdge;
+    Vertex *otherEnd;
 
     q.push(startVertex);
 
@@ -280,13 +269,15 @@ public:
 
       currentEdge = currentVertex->getData()->getConnectedEdges()->getHead();
       while (currentEdge) {
-        otherEnd = currentEdge->getData()->getAnotherEnd(currentVertex->getData());
+        otherEnd =
+            currentEdge->getData()->getAnotherEnd(currentVertex->getData());
 
         if (otherEnd && !visited[otherEnd]) {
           // Check if not enqueued
           copy = q;
           while (!copy.empty()) {
-            if (copy.front()->getData() == otherEnd) break;
+            if (copy.front()->getData() == otherEnd)
+              break;
             copy.pop();
           }
 
@@ -296,15 +287,99 @@ public:
 
         currentEdge = currentEdge->getNext();
       }
+    }
+  };
 
+  void DFS(int start = 0) const {
+    Vertex *v = new Vertex(start);
+    Node<Vertex *> *startVertex = vertexList->exists(v);
+    if (!startVertex) {
+      std::cout << "Invalid vertex for DFS" << std::endl;
+      delete v;
+      return;
+    }
+    delete v;
+
+    std::stack<Node<Vertex *> *> s, copy;
+    std::unordered_map<Vertex *, bool> visited;
+    Node<Edge *> *currentEdge;
+    Node<Vertex *> *tmp;
+    Vertex *otherEnd;
+    bool depthReached = false;
+
+    Node<Vertex *> *currentVertex = vertexList->getHead();
+    while (currentVertex) {
+      visited[currentVertex->getData()] = false;
       currentVertex = currentVertex->getNext();
     }
 
+    s.push(startVertex);
+
+    while (!s.empty()) {
+      currentVertex = s.top();
+
+      // Check if there are any unvisited children
+      currentEdge = currentVertex->getData()->getConnectedEdges()->getHead();
+      depthReached = true;
+      while (currentEdge) {
+        otherEnd =
+            currentEdge->getData()->getAnotherEnd(currentVertex->getData());
+        if (otherEnd && !visited[otherEnd]) {
+
+          // Check if not already added to the stack
+          copy = s;
+          while (!copy.empty()) {
+            if (copy.top()->getData() == otherEnd)
+              break;
+            copy.pop();
+          }
+
+          if (copy.empty()) {
+            s.push(vertexList->exists(otherEnd));
+            depthReached = false;
+          }
+        }
+
+        currentEdge = currentEdge->getNext();
+      }
+
+      if (depthReached) {
+        std::cout << currentVertex << std::endl;
+        s.pop();
+        visited[currentVertex->getData()] = true;
+      }
+    }
   };
 
 private:
   NodeList<Vertex *> *vertexList;
   NodeList<Edge *> *edgeList;
+};
+
+void test(Graph *g);
+
+int main() {
+  int n, m, i, u, v;
+  Graph g;
+  // test(&g);
+
+  std::cin >> n >> m;
+
+  for (i = 0; i < n; i++) {
+    std::cin >> u;
+    g.insertVertex(u);
+  }
+
+  for (i = 0; i < m; i++) {
+    std::cin >> u >> v;
+    g.insertEdge(u, v);
+  }
+
+  g.BFS();
+  std::cout << std::endl;
+  g.DFS();
+
+  return 0;
 };
 
 void test(Graph *g) {
@@ -332,14 +407,9 @@ void test(Graph *g) {
   }
 
   g->printAdjacentList();
-  std::cout << "Start vertex for BFS: ";
+  std::cout << "Start vertex for BFS and DFS: ";
   std::cin >> u;
   g->BFS(u);
-};
-
-int main() {
-  Graph g;
-  test(&g);
-
-  return 0;
+  std::cout << std::endl;
+  g->DFS(u);
 };
