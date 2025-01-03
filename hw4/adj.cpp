@@ -1,7 +1,6 @@
 #include <iostream>
 #include <list>
 #include <vector>
-
 using namespace std;
 
 class Graph {
@@ -17,30 +16,30 @@ public:
   void PrintAdjacentList();
 
 private:
-  int NumberVecterxs;
+  int NumberVertices;
   int NumberEdges;
-  list<int> vertexs;
+  list<int> vertices;
   vector<vector<int>> adjacent_matrix;
   vector<list<vector<int>>> adjacent_list;
   // return a list of all vertices that are adjacent to v
 };
 
-Graph::Graph() { NumberVecterxs = NumberEdges = 0; }
-bool Graph::IsEmpty() { return (vertexs.size() == 0); }
+Graph::Graph() : NumberVertices(0), NumberEdges(0) {};
+bool Graph::IsEmpty() { return (vertices.size() == 0); }
 
 list<vector<int>> Graph::Adjacent_List(int i) { return adjacent_list[i]; }
 
 void Graph::InsertVertex(int v) {
-  vertexs.push_back(v);
-  NumberVecterxs++;
+  vertices.push_back(v);
+  NumberVertices++;
 }
 void Graph::InsertEdge(int u, int v, int weight = 1) {
   if (adjacent_matrix.size() == 0) {
-    for (int i = 0; i < vertexs.size(); i++)
-      adjacent_matrix.push_back(vector<int>(vertexs.size()));
+    for (int i = 0; i < vertices.size(); i++)
+      adjacent_matrix.push_back(vector<int>(vertices.size()));
   }
   if (adjacent_list.size() == 0) {
-    for (int i = 0; i < vertexs.size(); i++)
+    for (int i = 0; i < vertices.size(); i++)
       adjacent_list.push_back(list<vector<int>>());
   }
 
@@ -51,8 +50,8 @@ void Graph::InsertEdge(int u, int v, int weight = 1) {
 }
 
 void Graph::PrintAdjacentMatrix() {
-  for (int i = 0; i < vertexs.size(); i++) {
-    for (int j = 0; j < vertexs.size(); j++) {
+  for (int i = 0; i < vertices.size(); i++) {
+    for (int j = 0; j < vertices.size(); j++) {
       if (adjacent_matrix[i][j])
         cout << "(" << i << ", " << j << ", " << adjacent_matrix[i][j] << ")"
              << endl;
@@ -60,7 +59,7 @@ void Graph::PrintAdjacentMatrix() {
   }
 }
 void Graph::PrintAdjacentList() {
-  for (int i = 0; i < vertexs.size(); i++) {
+  for (int i = 0; i < vertices.size(); i++) {
     for (auto it : adjacent_list[i]) {
       cout << "(" << i << ", " << it[0] << ", " << it[1] << ")" << endl;
     }
@@ -70,7 +69,7 @@ void Graph::PrintAdjacentList() {
 int main() {
   int u, v;
   int weight;
-  int N; // number of input vertexs
+  int N; // number of input vertices
   int M; // number of input edges
   /* Template for reading graph with edges with weight = 1*/
   Graph g1;
