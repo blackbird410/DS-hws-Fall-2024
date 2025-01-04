@@ -216,7 +216,7 @@ public:
     Edge *newEdge = new Edge(uExists, vExists, w);
     edgeList->insert(newEdge);
     uExists->addConnectedEdge(newEdge);
-    vExists->addConnectedEdge(newEdge);
+    // vExists->addConnectedEdge(newEdge);
   };
 
   void printAdjacentList() const {
@@ -379,6 +379,8 @@ int main() {
   g.BFS();
   std::cout << std::endl;
   g.DFS();
+  // std::cout << std::endl;
+  // g.printAdjacentList();
 
   return 0;
 };
