@@ -1,13 +1,11 @@
-#include <array>
-#include <fstream>
 #include <iostream>
 #include <queue>
 #include <stack>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-// Implement the Kruskal’s algorithm using adjacency matrix as graph representation.
+#include <array>
+#include <fstream>
 
 template <class T> class Node {
 public:
@@ -15,8 +13,9 @@ public:
   Node(const T &d) : data(d), next(nullptr) {};
   ~Node() {};
 
-  bool operator==(const Node<T> *other) const { return (other && getData() == other->getData());};
-  bool operator<(const Node<T> *other) const { return (other && getData() < other->getData()); };
+  bool operator==(const Node<T> *other) const {
+    return (other && getData() == other->getData());
+  };
 
   T getData() const { return data; };
   void setData(const T &newData) { data = newData; };
@@ -40,18 +39,48 @@ public:
   NodeList() : head(nullptr), tail(nullptr), count(0) {};
   ~NodeList() { deleteNode(head); };
 
+  Node<T>* operator[](int i) const {
+    if (i > getSize() || i < getSize()) return nullptr;
+
+    Node<T>* p = getHead();
+    int j = 0;
+    while (p) {
+      if (i == j) return p; 
+      j++;
+    }
+    return nullptr;
+  };
+
+  int getIndex(const T& d) const {
+    Node<T>* p = head;
+
+    int i = 0;
+    while (p) {
+      if constexpr (std::is_pointer<T>::value)
+        if (*(p->getData()) == *d)
+          return i;
+      else 
+          if (p->getData() == d)
+            return i;
+      i++;
+      p = p->getNext();
+    }
+
+    return -1;
+  };
+
   // T could be a Vertex or an Edge
   Node<T> *exists(const T &d) {
     Node<T> *p = head;
 
     while (p) {
-      if constexpr (std::is_pointer<T>::value) {
+      if constexpr (std::is_pointer<T>::value)
         if (*(p->getData()) == *d)
           return p;
-      } else {
+      else
         if (p->getData() == d)
           return p;
-      }
+
       p = p->getNext();
     }
 
@@ -109,10 +138,13 @@ class Vertex {
 public:
   Vertex(int d) : data(d), connectedEdges(new NodeList<Edge *>()) {};
   ~Vertex() { delete connectedEdges; };
-  bool operator==(const Vertex *other) const { return (other && data == other->data); };
+  bool operator==(const Vertex *other) const {
+    return (other && data == other->data);
+  };
+
   bool operator==(const Vertex &other) const { return (data == other.data); };
+
   bool operator!=(const Vertex &other) const { return !(*this == other); };
-  bool operator<(const Vertex &other) const { return (data < other.data); };
 
   int getData() const { return data; };
   void setData(const int &d) { data = d; };
@@ -152,10 +184,10 @@ public:
   };
 
   bool operator!=(const Edge &other) const { return !(*this == other); };
-  bool operator<(const Vertex &other) const { return (getWeight() < other.getWeight()); };
 
   Vertex *getAnotherEnd(const Vertex *v) const {
-    return (!v || v == vertices[1]) ? vertices[0] : vertices[1];
+    // Return the second edge only when trying to access the vertices because of directed edge property
+    return (v == vertices[0]) ? vertices[1] : nullptr;
   };
 
   int getWeight() const { return weight; };
@@ -214,7 +246,7 @@ public:
     Edge *newEdge = new Edge(uExists, vExists, w);
     edgeList->insert(newEdge);
     uExists->addConnectedEdge(newEdge);
-    vExists->addConnectedEdge(newEdge);
+    // vExists->addConnectedEdge(newEdge);  // Adjacency is directional
   };
 
   void printAdjacentList() const {
@@ -235,6 +267,43 @@ public:
       std::cout << std::endl;
 
       v = v->getNext();
+    }
+  };
+
+  void getAdjacentMatrix(int** adjMatrix) {
+    // Generates the adjacent matrix and send it back through the argument
+    int dim = vertexList->getSize(), i, j;
+    adjMatrix = new int*[dim];
+    for (i = 0; i < dim; i++)
+      adjMatrix[i] = new int[dim];
+
+    // Initialize the matrix elements to 0
+    for (i = 0; i < dim; i++)
+      for (j = 0; j < dim; j++)
+        adjMatrix = 0;
+
+    std::cout << "Matrix initialized: " << std::endl;
+    for (i = 0; i < dim; i++) {
+      for (j = 0; j < dim; j++, std::cout << " ")
+        std::cout << adjMatrix[i][j];
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    // Parse all the vertices and detect to which other vertices they are connected
+    Node<Vertex*>* p = vertexList->getHead();
+    Node<Edge*>* currentEdge;
+    Vertex* otherEnd;
+    while (p) {
+      // Parse the list of connected edges for the current vertex
+      currentEdge = p->getData()->getConnectedEdges()->getHead();
+      while (currentEdge) {
+        otherEnd = currentEdge->getData()->getAnotherEnd(p->getData());
+        // Assign the right coordinates for the matrix because the vertexList might not start with 0
+        adjMatrix[vertexList->getIndex(p->getData())][vertexList->getIndex(otherEnd)] = 1;
+        currentEdge = currentEdge->getNext();
+      }
+      p = p->getNext();
     }
   };
 
@@ -263,9 +332,19 @@ int main() {
     g.insertEdge(u, v);
   }
 
-  g.BFS();
   std::cout << std::endl;
-  g.DFS();
+  int** adjMatrix;
+  g.getAdjacentMatrix(adjMatrix);
+  for (u = 0; u < n; u++) {
+    for (v = 0; v < n; v++, std::cout << " ")
+      std::cout << adjMatrix[u][v];
+    std::cout << std::endl;
+  }
+
+  // Clean up
+  for (u = 0; u < n; u++)
+    delete[] adjMatrix[u];
+  delete[] adjMatrix;
 
   return 0;
 };
@@ -297,7 +376,5 @@ void test(Graph *g) {
   g->printAdjacentList();
   std::cout << "Start vertex for BFS and DFS: ";
   std::cin >> u;
-  g->BFS(u);
   std::cout << std::endl;
-  g->DFS(u);
 };
