@@ -156,7 +156,8 @@ public:
   bool operator!=(const Edge &other) const { return !(*this == other); };
 
   Vertex *getAnotherEnd(const Vertex *v) const {
-    return (!v || v == vertices[1]) ? vertices[0] : vertices[1];
+    // Return the second edge only when trying to access the vertices because of directed edge property
+    return (v == vertices[0]) ? vertices[1] : nullptr;
   };
 
   int getWeight() const { return weight; };
