@@ -280,6 +280,22 @@ public:
   Graph()
       : vertexList(new NodeList<Vertex *>()),
         edgeList(new NodeList<Edge *>()) {};
+  Graph(const Graph &g)
+      : vertexList(new NodeList<Vertex *>()), edgeList(new NodeList<Edge *>()) {
+    Node<Vertex *> *currentVertex = g.getVertexList()->getHead();
+    while (currentVertex) {
+      insertVertex(currentVertex->getData()->getData());
+      currentVertex = currentVertex->getNext();
+    }
+
+    Node<Edge *> *currentEdge = g.getEdgeList()->getHead();
+    while (currentEdge) {
+      insertEdge((*currentEdge->getData())[0]->getData(),
+                 (*currentEdge->getData())[1]->getData(),
+                 currentEdge->getData()->getWeight());
+      currentEdge = currentEdge->getNext();
+    }
+  };
 
   ~Graph() {
     Node<Vertex *> *v = vertexList->getHead();
@@ -510,7 +526,6 @@ void Graph::minimumCostSpanningTree() const {
   // Using Kruskal's algorithm and adjacent matrix
   Graph minSpanTree;
   Graph *tmpSpanTree;
-  Node<Vertex *> *currentVertex;
   Node<Edge *> *currentEdge;
 
   int **adjMatrix = nullptr;
@@ -544,20 +559,7 @@ void Graph::minimumCostSpanningTree() const {
 
     // Save the current spanning tree, and check if a cycle is generated when
     // adding the new edge
-    tmpSpanTree = new Graph();
-    currentVertex = minSpanTree.getVertexList()->getHead();
-    while (currentVertex) {
-      tmpSpanTree->insertVertex(currentVertex->getData()->getData());
-      currentVertex = currentVertex->getNext();
-    }
-
-    currentEdge = minSpanTree.getEdgeList()->getHead();
-    while (currentEdge) {
-      tmpSpanTree->insertEdge((*currentEdge->getData())[0]->getData(),
-                              (*currentEdge->getData())[1]->getData(),
-                              currentEdge->getData()->getWeight());
-      currentEdge = currentEdge->getNext();
-    }
+    tmpSpanTree = new Graph(minSpanTree);
 
     tmpSpanTree->insertVertex((*minEdge)[0]->getData());
     tmpSpanTree->insertVertex((*minEdge)[1]->getData());
