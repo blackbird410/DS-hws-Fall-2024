@@ -1,11 +1,12 @@
+#include <array>
+#include <fstream>
 #include <iostream>
 #include <queue>
 #include <stack>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <array>
-#include <fstream>
+
 
 template <class T> class Node {
 public:
@@ -39,29 +40,30 @@ public:
   NodeList() : head(nullptr), tail(nullptr), count(0) {};
   ~NodeList() { deleteNode(head); };
 
-  Node<T>* operator[](int i) const {
-    if (i > getSize() || i < getSize()) return nullptr;
+  Node<T> *operator[](int i) const {
+    if (i > getSize() || i < getSize())
+      return nullptr;
 
-    Node<T>* p = getHead();
+    Node<T> *p = getHead();
     int j = 0;
     while (p) {
-      if (i == j) return p; 
+      if (i == j)
+        return p;
       j++;
     }
     return nullptr;
   };
 
-  int getIndex(const T& d) const {
-    Node<T>* p = head;
+  int getIndex(const T &d) const {
+    Node<T> *p = head;
 
     int i = 0;
     while (p) {
       if constexpr (std::is_pointer<T>::value)
         if (*(p->getData()) == *d)
           return i;
-      else 
-          if (p->getData() == d)
-            return i;
+        else if (p->getData() == d)
+          return i;
       i++;
       p = p->getNext();
     }
@@ -77,8 +79,7 @@ public:
       if constexpr (std::is_pointer<T>::value)
         if (*(p->getData()) == *d)
           return p;
-      else
-        if (p->getData() == d)
+        else if (p->getData() == d)
           return p;
 
       p = p->getNext();
@@ -86,6 +87,36 @@ public:
 
     return nullptr;
   }
+
+  void removeFromHead() {
+    if (!head) return;
+
+    Node<T>* tmp = head;
+    tail = (tail == head) ? nullptr : tail;
+    head = head->getNext();
+    delete tmp;
+  };
+
+  void removeFromTail() {
+    if (!head) return;
+    if (head == tail) {
+      delete head;
+      head = tail = nullptr;
+      return;
+    };
+
+    Node<T>* tmp = head;
+
+    while (tmp) {
+      if (tmp->getNext() == tail) {
+        delete tmp->getNext();
+        tmp->setNext(nullptr);
+        tail = tmp;
+        break;
+      }
+      tmp = tmp->getNext();
+    }
+  };
 
   void insert(const T &data) {
     if (exists(data))
@@ -186,7 +217,8 @@ public:
   bool operator!=(const Edge &other) const { return !(*this == other); };
 
   Vertex *getAnotherEnd(const Vertex *v) const {
-    // Return the second edge only when trying to access the vertices because of directed edge property
+    // Return the second edge only when trying to access the vertices because of
+    // directed edge property
     return (v == vertices[0]) ? vertices[1] : nullptr;
   };
 
@@ -233,7 +265,7 @@ public:
       delete v;
   };
 
-  void insertEdge(const int &u, const int &v, int w = 1) {
+  void insertEdge(const int &u, const int &v, const int& w = 1) {
     Vertex v1(u), v2(v);
     Vertex *uExists = vertexList->exists(&v1)->getData();
     Vertex *vExists = vertexList->exists(&v2)->getData();
@@ -270,55 +302,56 @@ public:
     }
   };
 
-  void getAdjacentMatrix(int** adjMatrix) {
-    // Generates the adjacent matrix and send it back through the argument
-    int dim = vertexList->getSize(), i, j;
-    adjMatrix = new int*[dim];
-    for (i = 0; i < dim; i++)
+  void getAdjacentMatrix(int **&adjMatrix) const {
+    // Get the number of vertices
+    int dim = vertexList->getSize();
+    if (dim == 0)
+      return;
+
+    // Allocate memory for the adjacency matrix
+    adjMatrix = new int *[dim];
+    for (int i = 0; i < dim; i++)
       adjMatrix[i] = new int[dim];
 
     // Initialize the matrix elements to 0
-    for (i = 0; i < dim; i++)
-      for (j = 0; j < dim; j++)
-        adjMatrix = 0;
+    for (int i = 0; i < dim; i++)
+      for (int j = 0; j < dim; j++)
+        adjMatrix[i][j] = 0;
 
-    std::cout << "Matrix initialized: " << std::endl;
-    for (i = 0; i < dim; i++) {
-      for (j = 0; j < dim; j++, std::cout << " ")
-        std::cout << adjMatrix[i][j];
-      std::cout << std::endl;
-    }
-    std::cout << std::endl;
-
-    // Parse all the vertices and detect to which other vertices they are connected
-    Node<Vertex*>* p = vertexList->getHead();
-    Node<Edge*>* currentEdge;
-    Vertex* otherEnd;
+    // Populate the adjacency matrix
+    Node<Vertex *> *p = vertexList->getHead();
     while (p) {
-      // Parse the list of connected edges for the current vertex
-      currentEdge = p->getData()->getConnectedEdges()->getHead();
-      while (currentEdge) {
-        otherEnd = currentEdge->getData()->getAnotherEnd(p->getData());
-        // Assign the right coordinates for the matrix because the vertexList might not start with 0
-        adjMatrix[vertexList->getIndex(p->getData())][vertexList->getIndex(otherEnd)] = 1;
-        currentEdge = currentEdge->getNext();
+      int uIndex = vertexList->getIndex(p->getData());
+      if (uIndex != -1) {
+        // Parse the list of connected edges for the current vertex
+        Node<Edge *> *currentEdge =
+            p->getData()->getConnectedEdges()->getHead();
+        while (currentEdge) {
+          Vertex *otherEnd =
+              currentEdge->getData()->getAnotherEnd(p->getData());
+          if (otherEnd) {
+            int vIndex = vertexList->getIndex(otherEnd);
+            if (vIndex != -1)
+              adjMatrix[uIndex][vIndex] = currentEdge->getData()->getWeight();
+          }
+          currentEdge = currentEdge->getNext();
+        }
       }
       p = p->getNext();
     }
-  };
+  }
 
-
+  void minimumCostSpanningTree() const;
 private:
   NodeList<Vertex *> *vertexList;
   NodeList<Edge *> *edgeList;
 };
 
-void test(Graph *g);
+void Graph::minimumCostSpanningTree() const {}
 
 int main() {
-  int n, m, i, u, v;
+  int n, m, i, u, v, w;
   Graph g;
-  // test(&g);
 
   std::cin >> n >> m;
 
@@ -328,13 +361,16 @@ int main() {
   }
 
   for (i = 0; i < m; i++) {
-    std::cin >> u >> v;
-    g.insertEdge(u, v);
+    std::cin >> u >> v >> w;
+    g.insertEdge(u, v, w);
   }
 
   std::cout << std::endl;
-  int** adjMatrix;
+
+  // Generate and print the adjacency matrix
+  int **adjMatrix = nullptr;
   g.getAdjacentMatrix(adjMatrix);
+
   for (u = 0; u < n; u++) {
     for (v = 0; v < n; v++, std::cout << " ")
       std::cout << adjMatrix[u][v];
@@ -346,35 +382,8 @@ int main() {
     delete[] adjMatrix[u];
   delete[] adjMatrix;
 
+  g.minimumCostSpanningTree();
+
   return 0;
-};
+}
 
-void test(Graph *g) {
-  std::string filename = "test_sample.txt";
-  std::cout << "Filename: ";
-  std::getline(std::cin, filename);
-  std::ifstream inFile(filename);
-
-  if (!inFile) {
-    std::cerr << "Input file could not be opened" << std::endl;
-    exit(-1);
-  }
-
-  int n, m, i, u, v;
-  inFile >> n >> m;
-
-  for (i = 0; i < n; i++) {
-    inFile >> u;
-    g->insertVertex(u);
-  }
-
-  for (i = 0; i < m; i++) {
-    inFile >> u >> v;
-    g->insertEdge(u, v);
-  }
-
-  g->printAdjacentList();
-  std::cout << "Start vertex for BFS and DFS: ";
-  std::cin >> u;
-  std::cout << std::endl;
-};
