@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <climits>
 #include <fstream>
@@ -190,12 +191,15 @@ public:
   Vertex(int d) : data(d), connectedEdges(new NodeList<Edge *>()) {};
   ~Vertex() { delete connectedEdges; };
   bool operator==(const Vertex *other) const {
-    return (other && data == other->data);
+    return other && data == other->getData();
+  };
+  bool operator<(const Vertex *other) const {
+    return other && data < other->getData();
   };
 
   bool operator==(const Vertex &other) const { return (data == other.data); };
-
   bool operator!=(const Vertex &other) const { return !(*this == other); };
+  bool operator<(const Vertex &other) const { return data < other.getData(); };
 
   int getData() const { return data; };
   void setData(const int &d) { data = d; };
@@ -234,6 +238,15 @@ public:
               vertices[1] == other.vertices[0])));
   };
 
+  bool operator<(const Edge &other) const {
+    return (*(vertices[0]) < *(other.vertices[0]) ||
+            (*(vertices[0]) == *(other.vertices[0]) &&
+             *(vertices[1]) < *(other.vertices[1])) ||
+            (*(vertices[0]) == *(other.vertices[0]) &&
+             *(vertices[1]) == *(other.vertices[1]) &&
+             weight < other.getWeight()));
+  };
+
   bool operator!=(const Edge &other) const { return !(*this == other); };
 
   Vertex *operator[](const int &i) const {
@@ -248,8 +261,12 @@ public:
 
   friend std::ostream &operator<<(std::ostream &out, const Edge *e) {
     if (e)
-      out << "(" << e->vertices[0] << ", " << e->vertices[1] << ", "
-          << e->getWeight() << ")";
+      out << "(" << e->vertices[0] << ", " << e->vertices[1] << ")";
+    return out;
+  };
+
+  friend std::ostream &operator<<(std::ostream &out, const Edge &e) {
+    out << "(" << e.vertices[0] << ", " << e.vertices[1] << ")";
     return out;
   };
 
@@ -558,12 +575,19 @@ void Graph::minimumCostSpanningTree() const {
     adjMatrix[uIndex][vIndex] = INT_MAX;
   }
 
-  // Display the result spanning tree using graph representation
+  // Display the result spanning tree in sorted order according to the first and
+  // second vertex
+  std::vector<Edge *> edges;
   currentEdge = minSpanTree.getEdgeList()->getHead();
   while (currentEdge) {
-    std::cout << currentEdge << std::endl;
+    edges.push_back(currentEdge->getData());
     currentEdge = currentEdge->getNext();
   }
+
+  std::sort(edges.begin(), edges.end(),
+            [](Edge *a, Edge *b) { return *a < *b; });
+  for (auto &e : edges)
+    std::cout << e << std::endl;
 
   delete tmpSpanTree;
 }
