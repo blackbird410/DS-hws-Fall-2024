@@ -612,8 +612,6 @@ int main() {
     g.insertEdge(u, v, w);
   }
 
-  std::cout << std::endl;
-
   // g.printAdjacentMatrix();
   g.minimumCostSpanningTree();
 
