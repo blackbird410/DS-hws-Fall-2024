@@ -596,50 +596,48 @@ void test(Graph *g);
 int main() {
   Graph g;
 
-  test(&g);
+  // test(&g);
 
-  // int n, m, i, u, v, w;
-  // std::cin >> n >> m;
-
-  // for (i = 0; i < n; i++) {
-  //   std::cin >> u;
-  //   g.insertVertex(u);
-  // }
-
-  // for (i = 0; i < m; i++) {
-  //   std::cin >> u >> v >> w;
-  //   g.insertEdge(u, v, w);
-  // }
-
-  // g.printAdjacentList();
-  // std::cout << std::endl;
-  // g.minimumCostSpanningTree();
-
-  // return 0;
-}
-
-void test(Graph *g) {
   int n, m, i, u, v, w;
-  std::string filename = "test_b1.txt";
-  std::cout << "Test filename: ";
-  std::getline(std::cin, filename);
-  std::ifstream inFile(filename);
-  if (!inFile) {
-    std::cout << "File could not be opened" << std::endl;
-    exit(-1);
-  }
-
-  inFile >> n >> m;
+  std::cin >> n >> m;
 
   for (i = 0; i < n; i++) {
-    inFile >> u;
-    g->insertVertex(u);
+    std::cin >> u;
+    g.insertVertex(u);
   }
 
   for (i = 0; i < m; i++) {
-    inFile >> u >> v >> w;
-    g->insertEdge(u, v, w);
+    std::cin >> u >> v >> w;
+    g.insertEdge(u, v, w);
   }
-  std::cout << std::endl;
-  g->minimumCostSpanningTree();
-};
+
+  g.minimumCostSpanningTree();
+
+  return 0;
+}
+
+// void test(Graph *g) {
+//   int n, m, i, u, v, w;
+//   std::string filename = "test_b2.txt";
+//   // std::cout << "Test filename: ";
+//   // std::getline(std::cin, filename);
+//   std::ifstream inFile(filename);
+//   if (!inFile) {
+//     std::cout << "File could not be opened" << std::endl;
+//     exit(-1);
+//   }
+//
+//   inFile >> n >> m;
+//
+//   for (i = 0; i < n; i++) {
+//     inFile >> u;
+//     g->insertVertex(u);
+//   }
+//
+//   for (i = 0; i < m; i++) {
+//     inFile >> u >> v >> w;
+//     g->insertEdge(u, v, w);
+//   }
+//   std::cout << std::endl;
+//   g->minimumCostSpanningTree();
+// };

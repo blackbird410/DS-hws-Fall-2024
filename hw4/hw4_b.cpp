@@ -333,7 +333,7 @@ public:
     Edge *newEdge = new Edge(uExists, vExists, w);
     edgeList->insert(newEdge);
     uExists->addConnectedEdge(newEdge);
-    vExists->addConnectedEdge(newEdge);  // Remove for directional adjacency
+    vExists->addConnectedEdge(newEdge); // Remove for directional adjacency
   };
 
   void printAdjacentList() const {
@@ -483,28 +483,26 @@ private:
   }
 
   bool dfsCheckCycle(Vertex *vertex, Vertex *parent,
-                   std::unordered_map<Vertex *, bool> &visited) const {
+                     std::unordered_map<Vertex *, bool> &visited) const {
     visited[vertex] = true;
 
     Node<Edge *> *curEdge = vertex->getConnectedEdges()->getHead();
     while (curEdge) {
-        Vertex *neighbor = curEdge->getData()->getAnotherEnd(vertex);
+      Vertex *neighbor = curEdge->getData()->getAnotherEnd(vertex);
 
-        // Don't count the parent node as part of the cycle
-        if (!visited[neighbor]) {
-            if (dfsCheckCycle(neighbor, vertex, visited))
-                return true;
-        } else if (parent && neighbor != parent) {
-            return true;
-        }
+      // Don't count the parent node as part of the cycle
+      if (!visited[neighbor]) {
+        if (dfsCheckCycle(neighbor, vertex, visited))
+          return true;
+      } else if (parent && neighbor != parent) {
+        return true;
+      }
 
-        curEdge = curEdge->getNext();
+      curEdge = curEdge->getNext();
     }
 
     return false;
-}
-
-
+  }
 };
 
 void Graph::minimumCostSpanningTree() const {
@@ -574,7 +572,6 @@ void Graph::minimumCostSpanningTree() const {
             [](Edge *a, Edge *b) { return *a < *b; });
   for (auto &e : edges)
     std::cout << e << std::endl;
-
 }
 
 void test(Graph *g);
@@ -582,50 +579,50 @@ void test(Graph *g);
 int main() {
   Graph g;
 
-  test(&g);
+  // test(&g);
 
-  // int n, m, i, u, v, w;
-  // std::cin >> n >> m;
-
-  // for (i = 0; i < n; i++) {
-  //   std::cin >> u;
-  //   g.insertVertex(u);
-  // }
-
-  // for (i = 0; i < m; i++) {
-  //   std::cin >> u >> v >> w;
-  //   g.insertEdge(u, v, w);
-  // }
-
-  // // g.printAdjacentMatrix();
-  // g.minimumCostSpanningTree();
-
-  // return 0;
-}
-
-void test(Graph *g) {
   int n, m, i, u, v, w;
-  std::string filename = "test_b.txt";
-  std::cout << "Test filename: ";
-  std::getline(std::cin, filename);
-  std::ifstream inFile(filename);
-  if (!inFile) {
-    std::cout << "File could not be opened" << std::endl;
-    exit(-1);
-  }
-
-  inFile >> n >> m;
+  std::cin >> n >> m;
 
   for (i = 0; i < n; i++) {
-    inFile >> u;
-    g->insertVertex(u);
+    std::cin >> u;
+    g.insertVertex(u);
   }
 
   for (i = 0; i < m; i++) {
-    inFile >> u >> v >> w;
-    g->insertEdge(u, v, w);
+    std::cin >> u >> v >> w;
+    g.insertEdge(u, v, w);
   }
-  std::cout << std::endl;
 
-  g->minimumCostSpanningTree();
-};
+  // g.printAdjacentMatrix();
+  g.minimumCostSpanningTree();
+
+  return 0;
+}
+
+// void test(Graph *g) {
+//   int n, m, i, u, v, w;
+//   std::string filename = "test_b2.txt";
+//   // std::cout << "Test filename: ";
+//   // std::getline(std::cin, filename);
+//   std::ifstream inFile(filename);
+//   if (!inFile) {
+//     std::cout << "File could not be opened" << std::endl;
+//     exit(-1);
+//   }
+//
+//   inFile >> n >> m;
+//
+//   for (i = 0; i < n; i++) {
+//     inFile >> u;
+//     g->insertVertex(u);
+//   }
+//
+//   for (i = 0; i < m; i++) {
+//     inFile >> u >> v >> w;
+//     g->insertEdge(u, v, w);
+//   }
+//   std::cout << std::endl;
+//
+//   g->minimumCostSpanningTree();
+// };
