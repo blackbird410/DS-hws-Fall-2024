@@ -135,7 +135,7 @@ private:
 
 class Edge {
 public:
-  Edge(Vertex *u, Vertex *v, int w = 1) : vertices({u, v}), weight(w) {};
+  Edge(Vertex *u, Vertex *v, int w = 1) : weight(w), vertices({u, v}) {};
   ~Edge() {};
   bool operator==(const Edge *other) const {
     return (getWeight() == other->getWeight() &&
@@ -305,7 +305,6 @@ public:
     std::stack<Node<Vertex *> *> s, copy;
     std::unordered_map<Vertex *, bool> visited;
     Node<Edge *> *currentEdge;
-    Node<Vertex *> *tmp;
     Vertex *otherEnd;
     bool depthReached = false;
 
