@@ -523,80 +523,111 @@ private:
 };
 
 void Graph::shortestPath() const {
-  // Display the shortest path from 0 to all other vertices
-  // Use Dijkstra's shortest path algorithm
   int **adjMatrix = nullptr;
-  bool shortestPathFound = false;
-  std::unordered_map<Vertex *, bool> visited;
-  std::queue<Node<Vertex *> *> q;
-  Node<Vertex *> *curVertex = nullptr, *startVertex = nullptr;
-  Node<Edge *> *curEdge = nullptr;
-  Vertex *otherEnd = nullptr;
-  int uIndex, vIndex, i, j, mDim = vertexList->getSize();
-
-  // Get the vertex 0 from the vertexList
-  startVertex = getVertexList()->getHead();
-  while (startVertex) {
-    if (startVertex->getData()->getData() == 0)
-      break;
-    startVertex = startVertex->getNext();
-  }
-
-  if (!startVertex) {
-    std::cerr << "Vertex 0 not found in graph" << std::endl;
-    exit(-1);
-  }
-
   getAdjacentMatrix(adjMatrix);
-  uIndex = vertexList->getIndex(startVertex->getData());
-  for (i = 0; i < mDim; i++)
-    adjMatrix[i][i] = 0;
-  printAdjacentMatrix(&adjMatrix);
+  int mDim = vertexList->getSize();
 
-  // Relaxation process
-  // do {
-  //   // Use BFS to update the table entries
-  //   q.push(startVertex);
-  //   while (!q.empty()) {
-  //     // Visit the direct children
-  //     curVertex = q.front();
-  //     q.pop();
-  //
-  //     curEdge = curVertex->getData()->getConnectedEdges()->getHead();
-  //     while (curEdge) {
-  //       otherEnd = curEdge->getData()->getAnotherEnd(curVertex->getData());
-  //       uIndex = vertexList->getIndex(curVertex->getData());
-  //       vIndex = vertexList->getIndex(otherEnd);
+  // Initialize distances as infinity, except for the source vertex (0)
+  std::vector<int> dist(mDim, INT_MAX);
+  dist[0] = 0;
 
-  //     }
+  // Predecessor array to track the shortest path
+  std::vector<int> pred(mDim, -1); // -1 means no predecessor (start node)
 
-  //   }
-  //
-  // } while (shortestPathFound);
-};
+  // Priority queue (min-heap), holds pairs of (distance, vertex)
+  auto compare = [](std::pair<int, Vertex *> &a, std::pair<int, Vertex *> &b) {
+    return a.first >
+           b.first; // Min-heap comparison based on the first element (distance)
+  };
+  std::priority_queue<std::pair<int, Vertex *>,
+                      std::vector<std::pair<int, Vertex *>>, decltype(compare)>
+      pq(compare);
+
+  // Add the source vertex to the priority queue
+  pq.push({0, vertexList->getHead()->getData()});
+
+  // Dijkstra's algorithm
+  while (!pq.empty()) {
+    // Get the vertex with the smallest distance
+    auto [curDist, curVertex] = pq.top();
+    pq.pop();
+
+    // Skip if this vertex has already been processed
+    if (curDist > dist[vertexList->getIndex(curVertex)])
+      continue;
+
+    // Check all adjacent vertices
+    Node<Edge *> *edges = curVertex->getConnectedEdges()->getHead();
+    while (edges) {
+      Edge *edge = edges->getData();
+      Vertex *neighbor = edge->getAnotherEnd(curVertex);
+
+      int newDist = curDist + edge->getWeight();
+      int neighborIndex = vertexList->getIndex(neighbor);
+
+      // If a shorter path to the neighbor is found, update it
+      if (newDist < dist[neighborIndex]) {
+        dist[neighborIndex] = newDist;
+        pred[neighborIndex] =
+            vertexList->getIndex(curVertex); // Track the predecessor
+        pq.push({dist[neighborIndex], neighbor});
+      }
+
+      edges = edges->getNext();
+    }
+  }
+
+  // Display the shortest path from vertex 0 to all other vertices
+  for (int i = 1; i < mDim; ++i) {
+    if (dist[i] == INT_MAX) {
+      std::cout << "Vertex " << i << " is unreachable from vertex 0."
+                << std::endl;
+    } else {
+      // Reconstruct the path from vertex 0 to vertex i
+      std::vector<int> path;
+      for (int j = i; j != -1; j = pred[j]) {
+        path.push_back(j);
+      }
+
+      // Reverse the path to display it from 0 to i
+      std::reverse(path.begin(), path.end());
+
+      // Print the path and its cost
+      for (int v : path) {
+        std::cout << v << " ";
+      }
+      std::cout << std::endl;
+    }
+  }
+
+  // Clean up
+  for (int i = 0; i < mDim; i++) {
+    delete[] adjMatrix[i];
+  }
+  delete[] adjMatrix;
+}
 
 void test(Graph *g);
 
 int main() {
   Graph g;
 
-  test(&g);
+  // test(&g);
 
-  // int n, m, i, u, v, w;
-  // std::cin >> n >> m;
+  int n, m, i, u, v, w;
+  std::cin >> n >> m;
 
-  // for (i = 0; i < n; i++) {
-  //   std::cin >> u;
-  //   g.insertVertex(u);
-  // }
+  for (i = 0; i < n; i++) {
+    std::cin >> u;
+    g.insertVertex(u);
+  }
 
-  // for (i = 0; i < m; i++) {
-  //   std::cin >> u >> v >> w;
-  //   g.insertEdge(u, v, w);
-  // }
+  for (i = 0; i < m; i++) {
+    std::cin >> u >> v >> w;
+    g.insertEdge(u, v, w);
+  }
 
-  // // std::cout << std::endl;
-  // g.shortestPath();
+  g.shortestPath();
 
   return 0;
 }
@@ -623,6 +654,7 @@ void test(Graph *g) {
     inFile >> u >> v >> w;
     g->insertEdge(u, v, w);
   }
+
   std::cout << std::endl;
   g->shortestPath();
 };
