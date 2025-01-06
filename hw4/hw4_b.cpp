@@ -333,7 +333,7 @@ public:
     Edge *newEdge = new Edge(uExists, vExists, w);
     edgeList->insert(newEdge);
     uExists->addConnectedEdge(newEdge);
-    // vExists->addConnectedEdge(newEdge);  // Adjacency is directional
+    vExists->addConnectedEdge(newEdge);  // Remove for directional adjacency
   };
 
   void printAdjacentList() const {
@@ -435,16 +435,20 @@ public:
     }
   }
 
-  Edge *getEdge(const int &u, const int &v, const int &w) const {
+  Edge *getEdge(const int &u, const int &v, const int &w = INT_MAX) const {
     Node<Edge *> *e = edgeList->getHead();
     while (e) {
-      if ((*e->getData())[0]->getData() == u &&
-          (*e->getData())[1]->getData() == v && e->getData()->getWeight() == w)
-        return e->getData();
+      if (((*e->getData())[0]->getData() == u &&
+           (*e->getData())[1]->getData() == v) ||
+          ((*e->getData())[1]->getData() == u &&
+           (*e->getData())[0]->getData() == v)) {
+        if (w == INT_MAX || e->getData()->getWeight() == w)
+          return e->getData();
+      }
       e = e->getNext();
     }
     return nullptr;
-  };
+  }
 
   NodeList<Vertex *> *getVertexList() const { return vertexList; };
   NodeList<Edge *> *getEdgeList() const { return edgeList; };
@@ -455,71 +459,52 @@ private:
   NodeList<Vertex *> *vertexList;
   NodeList<Edge *> *edgeList;
 
+private:
   bool hasCycle() const {
     std::unordered_map<Vertex *, bool> visited;
-    std::unordered_map<Vertex *, bool> pathVisited;
 
-    Node<Vertex *> *tmp = vertexList->getHead();
-    while (tmp) {
-      visited[tmp->getData()] = false;
-      pathVisited[tmp->getData()] = false;
-      tmp = tmp->getNext();
+    // Initialize visited map for all vertices
+    Node<Vertex *> *curVertex = vertexList->getHead();
+    while (curVertex) {
+      visited[curVertex->getData()] = false;
+      curVertex = curVertex->getNext();
     }
 
-    Node<Vertex *> *currentVertex = vertexList->getHead();
-    while (currentVertex) {
-      if (!visited[currentVertex->getData()] &&
-          dfsCheckCycle(currentVertex, visited, pathVisited))
-        return true;
-
-      currentVertex = currentVertex->getNext();
+    // Perform DFS to detect cycles
+    curVertex = vertexList->getHead();
+    while (curVertex) {
+      if (!visited[curVertex->getData()])
+        if (dfsCheckCycle(curVertex->getData(), nullptr, visited))
+          return true;
+      curVertex = curVertex->getNext();
     }
 
     return false;
-  };
+  }
 
-  bool dfsCheckCycle(Node<Vertex *> *v,
-                     std::unordered_map<Vertex *, bool> &visited,
-                     std::unordered_map<Vertex *, bool> &pathVisited) const {
-    std::stack<Node<Vertex *> *> path;
-    Node<Edge *> *currentEdge = nullptr;
-    Node<Vertex *> *currentVertex = nullptr;
-    Vertex *otherEnd = nullptr;
-    bool hasReachedDepth = false;
+  bool dfsCheckCycle(Vertex *vertex, Vertex *parent,
+                   std::unordered_map<Vertex *, bool> &visited) const {
+    visited[vertex] = true;
 
-    path.push(v);
-    pathVisited[v->getData()] = true;
-    while (!path.empty()) {
-      currentVertex = path.top();
-      visited[currentVertex->getData()] = true;
+    Node<Edge *> *curEdge = vertex->getConnectedEdges()->getHead();
+    while (curEdge) {
+        Vertex *neighbor = curEdge->getData()->getAnotherEnd(vertex);
 
-      currentEdge = currentVertex->getData()->getConnectedEdges()->getHead();
-      hasReachedDepth = true;
-
-      while (currentEdge) {
-        otherEnd =
-            currentEdge->getData()->getAnotherEnd(currentVertex->getData());
-
-        if (visited[otherEnd] && pathVisited[otherEnd])
-          return true;
-        else if (!visited[otherEnd]) {
-          path.push(vertexList->exists(otherEnd));
-          pathVisited[otherEnd] = true;
-          hasReachedDepth = false;
+        // Don't count the parent node as part of the cycle
+        if (!visited[neighbor]) {
+            if (dfsCheckCycle(neighbor, vertex, visited))
+                return true;
+        } else if (parent && neighbor != parent) {
+            return true;
         }
 
-        currentEdge = currentEdge->getNext();
-      }
-
-      // Done exploring all the adjacent nodes
-      if (hasReachedDepth) {
-        path.pop();
-        pathVisited[currentVertex->getData()] = false;
-      }
+        curEdge = curEdge->getNext();
     }
 
     return false;
-  };
+}
+
+
 };
 
 void Graph::minimumCostSpanningTree() const {
@@ -531,12 +516,10 @@ void Graph::minimumCostSpanningTree() const {
   int **adjMatrix = nullptr;
   getAdjacentMatrix(adjMatrix);
 
-  // NodeList<Edge*> tmpEdges(this->edgeList);
   Edge *minEdge = nullptr;
   int uIndex, vIndex, i, j, minWeight, nVertices = vertexList->getSize();
   while (true) {
     // Find the min weight in the adjacent matrix and the corresponding edge
-    // printAdjacentMatrix(&adjMatrix);
     minWeight = INT_MAX;
     uIndex = vIndex = -1;
     for (i = 0; i < nVertices; i++) {
@@ -554,6 +537,7 @@ void Graph::minimumCostSpanningTree() const {
 
     minEdge = getEdge((*vertexList)[uIndex]->getData()->getData(),
                       (*vertexList)[vIndex]->getData()->getData(), minWeight);
+
     if (!minEdge)
       break;
 
@@ -571,8 +555,8 @@ void Graph::minimumCostSpanningTree() const {
       minSpanTree.insertVertex((*minEdge)[1]->getData());
       minSpanTree.insertEdge((*minEdge)[0]->getData(), (*minEdge)[1]->getData(),
                              minEdge->getWeight());
-    } else
-      delete tmpSpanTree;
+    }
+    delete tmpSpanTree;
 
     adjMatrix[uIndex][vIndex] = INT_MAX;
   }
@@ -591,7 +575,6 @@ void Graph::minimumCostSpanningTree() const {
   for (auto &e : edges)
     std::cout << e << std::endl;
 
-  delete tmpSpanTree;
 }
 
 void test(Graph *g);
@@ -599,30 +582,30 @@ void test(Graph *g);
 int main() {
   Graph g;
 
-  // test(&g);
+  test(&g);
 
-  int n, m, i, u, v, w;
-  std::cin >> n >> m;
+  // int n, m, i, u, v, w;
+  // std::cin >> n >> m;
 
-  for (i = 0; i < n; i++) {
-    std::cin >> u;
-    g.insertVertex(u);
-  }
+  // for (i = 0; i < n; i++) {
+  //   std::cin >> u;
+  //   g.insertVertex(u);
+  // }
 
-  for (i = 0; i < m; i++) {
-    std::cin >> u >> v >> w;
-    g.insertEdge(u, v, w);
-  }
+  // for (i = 0; i < m; i++) {
+  //   std::cin >> u >> v >> w;
+  //   g.insertEdge(u, v, w);
+  // }
 
-  // g.printAdjacentMatrix();
-  g.minimumCostSpanningTree();
+  // // g.printAdjacentMatrix();
+  // g.minimumCostSpanningTree();
 
-  return 0;
+  // return 0;
 }
 
 void test(Graph *g) {
   int n, m, i, u, v, w;
-  std::string filename;
+  std::string filename = "test_b.txt";
   std::cout << "Test filename: ";
   std::getline(std::cin, filename);
   std::ifstream inFile(filename);
@@ -644,7 +627,5 @@ void test(Graph *g) {
   }
   std::cout << std::endl;
 
-  g->printAdjacentMatrix();
-  std::cout << std::endl;
   g->minimumCostSpanningTree();
 };

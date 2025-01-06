@@ -525,19 +525,20 @@ private:
 void Graph::shortestPath() const {
   // Display the shortest path from 0 to all other vertices
   // Use Dijkstra's shortest path algorithm
-  int** adjMatrix = nullptr;
+  int **adjMatrix = nullptr;
   bool shortestPathFound = false;
-  std::unordered_map<Vertex*, bool> visited;
-  std::queue<Node<Vertex*>*> q;
-  Node<Vertex*> *curVertex = nullptr, *startVertex = nullptr;
-  Node<Edge*> *curEdge = nullptr;
-  Vertex* otherEnd = nullptr;
+  std::unordered_map<Vertex *, bool> visited;
+  std::queue<Node<Vertex *> *> q;
+  Node<Vertex *> *curVertex = nullptr, *startVertex = nullptr;
+  Node<Edge *> *curEdge = nullptr;
+  Vertex *otherEnd = nullptr;
   int uIndex, vIndex, i, j, mDim = vertexList->getSize();
 
   // Get the vertex 0 from the vertexList
-  startVertex = getVertexList()->getHead(); 
+  startVertex = getVertexList()->getHead();
   while (startVertex) {
-    if (startVertex->getData()->getData() == 0) break;
+    if (startVertex->getData()->getData() == 0)
+      break;
     startVertex = startVertex->getNext();
   }
 
@@ -555,12 +556,12 @@ void Graph::shortestPath() const {
   // Relaxation process
   // do {
   //   // Use BFS to update the table entries
-  //   q.push(startVertex); 
+  //   q.push(startVertex);
   //   while (!q.empty()) {
   //     // Visit the direct children
   //     curVertex = q.front();
   //     q.pop();
-  //     
+  //
   //     curEdge = curVertex->getData()->getConnectedEdges()->getHead();
   //     while (curEdge) {
   //       otherEnd = curEdge->getData()->getAnotherEnd(curVertex->getData());
@@ -570,7 +571,7 @@ void Graph::shortestPath() const {
   //     }
 
   //   }
-  //   
+  //
   // } while (shortestPathFound);
 };
 

@@ -418,68 +418,50 @@ private:
 
   bool hasCycle() const {
     std::unordered_map<Vertex *, bool> visited;
-    std::unordered_map<Vertex *, bool> pathVisited;
 
-    Node<Vertex *> *tmp = vertexList->getHead();
-    while (tmp) {
-      visited[tmp->getData()] = false;
-      pathVisited[tmp->getData()] = false;
-      tmp = tmp->getNext();
-    }
-
+    // Initialize visited map for all vertices
     Node<Vertex *> *curVertex = vertexList->getHead();
     while (curVertex) {
-      if (!visited[curVertex->getData()] &&
-          dfsCheckCycle(curVertex, visited, pathVisited))
-        return true;
+      visited[curVertex->getData()] = false;
+      curVertex = curVertex->getNext();
+    }
 
+    // Perform DFS to detect cycles
+    curVertex = vertexList->getHead();
+    while (curVertex) {
+      if (!visited[curVertex->getData()]) {
+        if (dfsCheckCycle(curVertex->getData(), nullptr, visited)) {
+          return true;
+        }
+      }
       curVertex = curVertex->getNext();
     }
 
     return false;
-  };
+  }
 
-  bool dfsCheckCycle(Node<Vertex *> *v,
-                     std::unordered_map<Vertex *, bool> &visited,
-                     std::unordered_map<Vertex *, bool> &pathVisited) const {
-    std::stack<Node<Vertex *> *> path;
-    Node<Edge *> *curEdge = nullptr;
-    Node<Vertex *> *curVertex = nullptr;
-    Vertex *otherEnd = nullptr;
-    bool hasReachedDepth = false;
+  bool dfsCheckCycle(Vertex *vertex, Vertex *parent,
+                     std::unordered_map<Vertex *, bool> &visited) const {
+    visited[vertex] = true;
 
-    path.push(v);
-    pathVisited[v->getData()] = true;
-    while (!path.empty()) {
-      curVertex = path.top();
-      visited[curVertex->getData()] = true;
+    Node<Edge *> *curEdge = vertex->getConnectedEdges()->getHead();
+    while (curEdge) {
+      Vertex *neighbor = curEdge->getData()->getAnotherEnd(vertex);
 
-      curEdge = curVertex->getData()->getConnectedEdges()->getHead();
-      hasReachedDepth = true;
-
-      while (curEdge) {
-        otherEnd = curEdge->getData()->getAnotherEnd(curVertex->getData());
-
-        if (visited[otherEnd] && pathVisited[otherEnd])
+      // If the neighbor is not visited, recurse on it
+      if (!visited[neighbor]) {
+        if (dfsCheckCycle(neighbor, vertex, visited))
           return true;
-        else if (!visited[otherEnd]) {
-          path.push(vertexList->exists(otherEnd));
-          pathVisited[otherEnd] = true;
-          hasReachedDepth = false;
-        }
-
-        curEdge = curEdge->getNext();
       }
+      // If the neighbor is visited and not the parent, we found a cycle
+      else if (neighbor != parent)
+        return true;
 
-      // Done exploring all the adjacent nodes
-      if (hasReachedDepth) {
-        path.pop();
-        pathVisited[curVertex->getData()] = false;
-      }
+      curEdge = curEdge->getNext();
     }
 
     return false;
-  };
+  }
 };
 
 void Graph::minimumCostSpanningTree() const {
