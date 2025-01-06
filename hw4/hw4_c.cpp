@@ -261,12 +261,12 @@ public:
 
   friend std::ostream &operator<<(std::ostream &out, const Edge *e) {
     if (e)
-      out << "(" << e->vertices[0] << ", " << e->vertices[1] << ")";
+      out << e->vertices[0] << " " << e->vertices[1];
     return out;
   };
 
   friend std::ostream &operator<<(std::ostream &out, const Edge &e) {
-    out << "(" << e.vertices[0] << ", " << e.vertices[1] << ")";
+    out << e.vertices[0] << " " << e.vertices[1];
     return out;
   };
 
